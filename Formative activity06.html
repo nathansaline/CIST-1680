@@ -1,1 +1,1625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CIST 1680 | Formative 3 – Search, Archive, Packages & SSH</title>
+  <style>
+    :root {
+      --cnm-gold: #F6BE00;
+      --cnm-sky: #41B6E6;
+      --bg-deep: #0b1320;
+      --bg-card: #131e30;
+      --bg-terminal: #0a1018;
+      --text-main: #e8eef7;
+      --text-muted: #8b9bb4;
+      --border: #1e2d45;
+      --success: #3dd68c;
+      --warn: #f6be00;
+      --error: #ff6b6b;
+      --prompt: #41B6E6;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg-deep);
+      color: var(--text-main);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    .site-header {
+      background: linear-gradient(135deg, #0d1a2d 0%, #131e30 100%);
+      border-bottom: 2px solid var(--cnm-gold);
+      padding: 1rem 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-badge {
+      background: var(--cnm-gold);
+      color: #0b1320;
+      font-weight: 800;
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      letter-spacing: 0.05em;
+    }
+
+    .brand h1 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .brand h1 span { color: var(--cnm-sky); }
+
+    .header-actions {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      padding: 0.55rem 1rem;
+      transition: transform 0.12s, box-shadow 0.12s, background 0.15s;
+    }
+
+    button:active { transform: scale(0.97); }
+
+    .btn-gold {
+      background: var(--cnm-gold);
+      color: #0b1320;
+    }
+    .btn-gold:hover { box-shadow: 0 0 12px rgba(246, 190, 0, 0.45); }
+
+    .btn-sky {
+      background: var(--cnm-sky);
+      color: #0b1320;
+    }
+    .btn-sky:hover { box-shadow: 0 0 12px rgba(65, 182, 230, 0.4); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover {
+      border-color: var(--cnm-sky);
+      color: var(--cnm-sky);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 1.15fr;
+      gap: 1.25rem;
+      padding: 1.25rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 960px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      background: rgba(0,0,0,0.25);
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .card-header h2 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--cnm-gold);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .card-body { padding: 1rem; }
+
+    .instructions {
+      max-height: calc(100vh - 140px);
+      overflow-y: auto;
+    }
+
+    .task-block {
+      margin-bottom: 1.25rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px dashed var(--border);
+    }
+    .task-block:last-child { border-bottom: none; margin-bottom: 0; }
+
+    .task-block h3 {
+      font-size: 0.9rem;
+      color: var(--cnm-sky);
+      margin-bottom: 0.4rem;
+    }
+
+    .task-block p, .task-block li {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+    }
+
+    .cmd-list {
+      background: var(--bg-terminal);
+      border-radius: 6px;
+      padding: 0.6rem 0.8rem;
+      margin: 0.5rem 0;
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      font-size: 0.8rem;
+      color: #b8e0c8;
+      line-height: 1.55;
+    }
+
+    .cmd-list code { color: var(--cnm-gold); }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+    .badge-partA { background: #1a3a5c; color: var(--cnm-sky); }
+    .badge-partB { background: #1a3a2c; color: #3dd68c; }
+    .badge-partC { background: #3a2a1a; color: var(--cnm-gold); }
+
+    .terminal-wrap {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 140px);
+      min-height: 480px;
+    }
+
+    .term-chrome {
+      background: #1a2438;
+      padding: 0.55rem 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+    }
+    .dot-red { background: #ff5f56; }
+    .dot-yellow { background: #ffbd2e; }
+    .dot-green { background: #27c93f; }
+
+    .term-title {
+      margin-left: 0.6rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: monospace;
+    }
+
+    .term-body {
+      flex: 1;
+      background: var(--bg-terminal);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #term-output {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.85rem 1rem;
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', 'Courier New', monospace;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .term-line { margin-bottom: 0.15rem; }
+    .term-prompt { color: var(--prompt); }
+    .term-cmd { color: var(--text-main); }
+    .term-out { color: #c8d6e5; }
+    .term-err { color: var(--error); }
+    .term-info { color: var(--cnm-gold); }
+    .term-success { color: var(--success); }
+
+    .term-input-row {
+      display: flex;
+      align-items: center;
+      padding: 0.55rem 1rem 0.7rem;
+      border-top: 1px solid var(--border);
+      background: #0c1420;
+      gap: 0.35rem;
+    }
+
+    .term-input-row .prompt-label {
+      font-family: monospace;
+      font-size: 0.82rem;
+      color: var(--prompt);
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    #cmd-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-main);
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      font-size: 0.82rem;
+      caret-color: var(--cnm-gold);
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 10, 20, 0.82);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1rem;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      max-width: 640px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    .modal-header {
+      padding: 1.1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h2 {
+      font-size: 1.1rem;
+      color: var(--cnm-gold);
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.4rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0.2rem 0.4rem;
+    }
+    .modal-close:hover { color: var(--error); }
+
+    .modal-body { padding: 1.25rem; }
+
+    .score-banner {
+      text-align: center;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1.25rem;
+      font-weight: 700;
+      font-size: 1.15rem;
+    }
+    .score-mastered { background: rgba(61, 214, 140, 0.15); color: var(--success); border: 1px solid var(--success); }
+    .score-partial { background: rgba(246, 190, 0, 0.12); color: var(--warn); border: 1px solid var(--warn); }
+    .score-needs { background: rgba(255, 107, 107, 0.12); color: var(--error); border: 1px solid var(--error); }
+
+    .fb-section { margin-bottom: 1.1rem; }
+    .fb-section h3 {
+      font-size: 0.9rem;
+      margin-bottom: 0.45rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .fb-section ul {
+      list-style: none;
+      padding-left: 0;
+    }
+    .fb-section li {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      padding: 0.3rem 0 0.3rem 1.2rem;
+      position: relative;
+    }
+    .fb-section li::before {
+      content: '•';
+      position: absolute;
+      left: 0.3rem;
+      color: var(--cnm-sky);
+    }
+
+    .progress-bar-wrap {
+      height: 8px;
+      background: #1a2438;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 0.5rem;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--cnm-sky), var(--cnm-gold));
+      border-radius: 4px;
+      transition: width 0.4s ease;
+    }
+
+    .footer-note {
+      text-align: center;
+      padding: 0.75rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+      margin-top: 0.5rem;
+    }
+
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #2a3a55; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3a4a65; }
+
+    .tip {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 0.6rem;
+      padding: 0.5rem 0.7rem;
+      background: rgba(65, 182, 230, 0.08);
+      border-left: 3px solid var(--cnm-sky);
+      border-radius: 0 4px 4px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="brand">
+      <span class="brand-badge">CNM</span>
+      <h1>CIST 1680 · <span>Formative Assessment 3</span></h1>
+    </div>
+    <div class="header-actions">
+      <button class="btn-ghost" id="btn-reset" title="Reset lab to initial state">Reset Lab</button>
+      <button class="btn-sky" id="btn-help" title="Show available commands">Help</button>
+      <button class="btn-gold" id="btn-submit">Submit Assessment</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Instructions Panel -->
+    <aside class="card instructions">
+      <div class="card-header">
+        <h2>📋 Lab Objectives</h2>
+      </div>
+      <div class="card-body">
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1rem;">
+          Aligned Outcomes: <strong style="color:var(--cnm-gold)">MLO 10–12</strong> — find/locate, tar/rsync/scp, package management (apt/dnf), ssh, and safe operational practices.
+        </p>
+
+        <div class="task-block">
+          <span class="badge badge-partA">Part A</span>
+          <h3>Task 1 – Searching with find &amp; locate</h3>
+          <p>Practice locating files by type and name:</p>
+          <div class="cmd-list">
+find ~/sysop-lab -type f<br>
+find /var/log -name "*.log" -type f | head -6<br>
+locate sshd_config
+          </div>
+        </div>
+
+        <div class="task-block">
+          <span class="badge badge-partA">Part A</span>
+          <h3>Task 2 – Create &amp; Inspect Archive</h3>
+          <p>Compress the lab directory and verify contents:</p>
+          <div class="cmd-list">
+tar -czvf ~/sysop-lab-backup.tar.gz -C ~ sysop-lab<br>
+tar -tzvf ~/sysop-lab-backup.tar.gz<br>
+ls -lh ~/sysop-lab-backup.tar.gz
+          </div>
+        </div>
+
+        <div class="task-block">
+          <span class="badge badge-partB">Part B</span>
+          <h3>Task 3 – Package Management Basics</h3>
+          <p>Refresh indexes, search, and check package status:</p>
+          <div class="cmd-list">
+sudo apt update<br>
+apt search tree | head -8<br>
+dpkg -l tree
+          </div>
+        </div>
+
+        <div class="task-block">
+          <span class="badge badge-partB">Part B</span>
+          <h3>Task 4 – Install &amp; Use tree</h3>
+          <p>Install the tree package and run it on your lab directory:</p>
+          <div class="cmd-list">
+sudo apt install -y tree<br>
+tree ~/sysop-lab
+          </div>
+        </div>
+
+        <div class="task-block">
+          <span class="badge badge-partC">Part C</span>
+          <h3>Task 5 – SSH Presence Check</h3>
+          <p>Confirm the SSH client and inspect config files:</p>
+          <div class="cmd-list">
+which ssh<br>
+sshd -T 2&gt;/dev/null | grep -E 'port |permitrootlogin'<br>
+ls /etc/ssh/
+          </div>
+        </div>
+
+        <div class="task-block">
+          <span class="badge badge-partC">Part C</span>
+          <h3>Task 6 – Key Auth &amp; Updates</h3>
+          <p>In 2–3 sentences, explain why administrators prefer key-based SSH authentication over passwords and why they always run <code style="color:var(--cnm-gold)">apt update</code> / <code style="color:var(--cnm-gold)">dnf update</code> before installing new packages.</p>
+          <p style="margin-top:0.4rem;font-size:0.8rem;color:var(--text-muted);">Use: <code style="color:var(--cnm-sky)">explain6 &lt;your answer&gt;</code></p>
+        </div>
+
+        <div class="task-block">
+          <span class="badge badge-partC">Part C</span>
+          <h3>Task 7 – Best Practices</h3>
+          <p>List three best practices you will apply every time you work on a Linux system.</p>
+          <p style="margin-top:0.4rem;font-size:0.8rem;color:var(--text-muted);">Use: <code style="color:var(--cnm-sky)">explain7 &lt;your three practices&gt;</code></p>
+        </div>
+
+        <div class="tip">
+          💡 Tip: The lab starts with a pre-built <strong style="color:var(--cnm-gold)">~/sysop-lab</strong> directory. Type <strong style="color:var(--cnm-gold)">help</strong> for supported commands. Use ↑ / ↓ for history.
+        </div>
+      </div>
+    </aside>
+
+    <!-- Terminal -->
+    <section class="card terminal-wrap">
+      <div class="term-chrome">
+        <span class="dot dot-red"></span>
+        <span class="dot dot-yellow"></span>
+        <span class="dot dot-green"></span>
+        <span class="term-title">student@cnm-lab: ~ — bash</span>
+      </div>
+      <div class="term-body">
+        <div id="term-output"></div>
+        <div class="term-input-row">
+          <span class="prompt-label" id="prompt-label">student@cnm-lab:~$</span>
+          <input type="text" id="cmd-input" autocomplete="off" spellcheck="false" aria-label="Command input" />
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <p class="footer-note">
+    Central New Mexico Community College · CIST 1680 Linux Essentials · Client-side lab simulator · No data leaves your browser
+  </p>
+
+  <!-- Feedback Modal -->
+  <div class="modal-overlay" id="feedback-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-title">Assessment Feedback</h2>
+        <button class="modal-close" id="modal-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <script>
+  /* ============================================================
+     CIST 1680 Formative 3 – Client-side Terminal Simulator
+     Search, Archive, Packages, SSH – virtual FS + command engine
+     ============================================================ */
+
+  const HOME = '/home/student';
+
+  function initialFS() {
+    return {
+      '/': {
+        type: 'dir', mode: '755', owner: 'root', group: 'root', children: {
+          'home': {
+            type: 'dir', mode: '755', owner: 'root', group: 'root', children: {
+              'student': {
+                type: 'dir', mode: '755', owner: 'student', group: 'student', children: {
+                  'sysop-lab': {
+                    type: 'dir', mode: '755', owner: 'student', group: 'student', children: {
+                      'docs': {
+                        type: 'dir', mode: '755', owner: 'student', group: 'student', children: {
+                          'notes.txt': { type: 'file', mode: '644', owner: 'student', group: 'student', content: 'Lab notes for CIST 1680\n' },
+                          'readme.md': { type: 'file', mode: '644', owner: 'student', group: 'student', content: '# SysOp Lab\n' }
+                        }
+                      },
+                      'scripts': {
+                        type: 'dir', mode: '755', owner: 'student', group: 'student', children: {
+                          'test.sh': { type: 'file', mode: '755', owner: 'student', group: 'student', content: '#!/bin/bash\necho "Hello from test.sh"\n' },
+                          'backup.sh': { type: 'file', mode: '644', owner: 'student', group: 'student', content: '#!/bin/bash\n# backup helper\n' }
+                        }
+                      },
+                      'data': {
+                        type: 'dir', mode: '755', owner: 'student', group: 'student', children: {
+                          'sample.csv': { type: 'file', mode: '644', owner: 'student', group: 'student', content: 'id,name\n1,alpha\n2,beta\n' }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          'tmp': { type: 'dir', mode: '1777', owner: 'root', group: 'root', children: {} },
+          'var': {
+            type: 'dir', mode: '755', owner: 'root', group: 'root', children: {
+              'log': {
+                type: 'dir', mode: '755', owner: 'root', group: 'root', children: {
+                  'syslog': { type: 'file', mode: '640', owner: 'root', group: 'adm', content: 'Jan 15 10:00:01 cnm-lab systemd[1]: Started Session.\n' },
+                  'auth.log': { type: 'file', mode: '640', owner: 'root', group: 'adm', content: 'Jan 15 10:01:00 cnm-lab sshd[1234]: Accepted publickey.\n' },
+                  'kern.log': { type: 'file', mode: '640', owner: 'root', group: 'adm', content: 'Jan 15 09:55:00 cnm-lab kernel: [0.000000] Linux version\n' },
+                  'dpkg.log': { type: 'file', mode: '644', owner: 'root', group: 'root', content: '2026-01-15 10:00:00 status installed tree:amd64 2.1.1\n' },
+                  'apt': {
+                    type: 'dir', mode: '755', owner: 'root', group: 'root', children: {
+                      'history.log': { type: 'file', mode: '644', owner: 'root', group: 'root', content: 'Start-Date: 2026-01-15\n' }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          'etc': {
+            type: 'dir', mode: '755', owner: 'root', group: 'root', children: {
+              'hostname': { type: 'file', mode: '644', owner: 'root', group: 'root', content: 'cnm-lab\n' },
+              'passwd': { type: 'file', mode: '644', owner: 'root', group: 'root', content: 'root:x:0:0:root:/root:/bin/bash\nstudent:x:1000:1000:Student:/home/student:/bin/bash\n' },
+              'ssh': {
+                type: 'dir', mode: '755', owner: 'root', group: 'root', children: {
+                  'sshd_config': { type: 'file', mode: '644', owner: 'root', group: 'root', content: 'Port 22\nPermitRootLogin no\nPasswordAuthentication no\nPubkeyAuthentication yes\n' },
+                  'ssh_config': { type: 'file', mode: '644', owner: 'root', group: 'root', content: 'Host *\n  IdentityFile ~/.ssh/id_ed25519\n' },
+                  'ssh_host_rsa_key': { type: 'file', mode: '600', owner: 'root', group: 'root', content: '-----BEGIN OPENSSH PRIVATE KEY-----\n(simulated)\n' },
+                  'ssh_host_rsa_key.pub': { type: 'file', mode: '644', owner: 'root', group: 'root', content: 'ssh-rsa AAAAB3...(simulated)\n' },
+                  'ssh_host_ed25519_key': { type: 'file', mode: '600', owner: 'root', group: 'root', content: '(simulated key)\n' },
+                  'ssh_host_ed25519_key.pub': { type: 'file', mode: '644', owner: 'root', group: 'root', content: 'ssh-ed25519 AAAAC3...(simulated)\n' },
+                  'moduli': { type: 'file', mode: '644', owner: 'root', group: 'root', content: '# Time Type Tests Tries Size Generator Modulus\n' }
+                }
+              }
+            }
+          },
+          'usr': {
+            type: 'dir', mode: '755', owner: 'root', group: 'root', children: {
+              'bin': {
+                type: 'dir', mode: '755', owner: 'root', group: 'root', children: {
+                  'ssh': { type: 'file', mode: '755', owner: 'root', group: 'root', content: '#!/bin/sh\n# OpenSSH client\n' },
+                  'tar': { type: 'file', mode: '755', owner: 'root', group: 'root', content: '' },
+                  'find': { type: 'file', mode: '755', owner: 'root', group: 'root', content: '' }
+                }
+              }
+            }
+          },
+          'bin': { type: 'dir', mode: '755', owner: 'root', group: 'root', children: {} },
+          'root': { type: 'dir', mode: '700', owner: 'root', group: 'root', children: {} }
+        }
+      }
+    };
+  }
+
+  // ---------- State ----------
+  let fs = initialFS();
+  let cwd = HOME;
+  let history = [];
+  let historyIndex = -1;
+  let commandLog = [];
+  let explain6Text = '';
+  let explain7Text = '';
+  let packages = { tree: false };   // installed state
+  let aptUpdated = false;
+  let archiveCreated = false;
+  let archiveListing = [];
+
+  // ---------- Path helpers ----------
+  function normalizePath(path) {
+    if (!path || path === '~') return HOME;
+    if (path.startsWith('~/')) path = HOME + path.slice(1);
+    if (path.startsWith('~')) path = HOME + path.slice(1);
+
+    let parts;
+    if (path.startsWith('/')) {
+      parts = path.split('/').filter(Boolean);
+    } else {
+      const base = cwd === '/' ? [] : cwd.split('/').filter(Boolean);
+      parts = base.concat(path.split('/').filter(Boolean));
+    }
+
+    const resolved = [];
+    for (const p of parts) {
+      if (p === '.' || p === '') continue;
+      if (p === '..') { resolved.pop(); continue; }
+      resolved.push(p);
+    }
+    return '/' + resolved.join('/');
+  }
+
+  function getNode(path) {
+    path = normalizePath(path);
+    if (path === '/') return fs['/'];
+    const parts = path.split('/').filter(Boolean);
+    let node = fs['/'];
+    for (const p of parts) {
+      if (!node || node.type !== 'dir' || !node.children[p]) return null;
+      node = node.children[p];
+    }
+    return node;
+  }
+
+  function getParentAndName(path) {
+    path = normalizePath(path);
+    if (path === '/') return { parent: null, name: null };
+    const parts = path.split('/').filter(Boolean);
+    const name = parts.pop();
+    const parentPath = '/' + parts.join('/');
+    return { parent: getNode(parentPath === '' ? '/' : parentPath), name };
+  }
+
+  function ensureDir(path) {
+    path = normalizePath(path);
+    if (getNode(path)) return getNode(path);
+    const parts = path.split('/').filter(Boolean);
+    let node = fs['/'];
+    for (const p of parts) {
+      if (!node.children[p]) {
+        node.children[p] = { type: 'dir', mode: '755', owner: 'student', group: 'student', children: {} };
+      }
+      node = node.children[p];
+    }
+    return node;
+  }
+
+  function modeToString(mode, type) {
+    const m = parseInt(mode, 8);
+    const perms = [
+      (m & 0o400) ? 'r' : '-', (m & 0o200) ? 'w' : '-', (m & 0o100) ? 'x' : '-',
+      (m & 0o040) ? 'r' : '-', (m & 0o020) ? 'w' : '-', (m & 0o010) ? 'x' : '-',
+      (m & 0o004) ? 'r' : '-', (m & 0o002) ? 'w' : '-', (m & 0o001) ? 'x' : '-'
+    ].join('');
+    return (type === 'dir' ? 'd' : '-') + perms;
+  }
+
+  function shortPath(p) {
+    if (p === HOME || p.startsWith(HOME + '/')) return '~' + p.slice(HOME.length);
+    return p;
+  }
+
+  function updatePrompt() {
+    const short = shortPath(cwd);
+    document.getElementById('prompt-label').textContent = `student@cnm-lab:${short}$`;
+    document.querySelector('.term-title').textContent = `student@cnm-lab: ${short} — bash`;
+  }
+
+  // ---------- Output ----------
+  const outputEl = document.getElementById('term-output');
+  const inputEl = document.getElementById('cmd-input');
+
+  function appendLine(html, cls = 'term-out') {
+    const div = document.createElement('div');
+    div.className = 'term-line ' + cls;
+    div.innerHTML = html;
+    outputEl.appendChild(div);
+    outputEl.scrollTop = outputEl.scrollHeight;
+  }
+
+  function printPromptAndCmd(cmd) {
+    const short = shortPath(cwd);
+    appendLine(`<span class="term-prompt">student@cnm-lab:${short}$</span> <span class="term-cmd">${escapeHtml(cmd)}</span>`);
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // ---------- Collect files recursively ----------
+  function collectFiles(node, basePath, opts = {}) {
+    const results = [];
+    if (!node || node.type !== 'dir') return results;
+    for (const [name, child] of Object.entries(node.children)) {
+      const full = basePath === '/' ? '/' + name : basePath + '/' + name;
+      if (child.type === 'file') {
+        if (opts.nameGlob) {
+          const pattern = opts.nameGlob.replace(/\./g, '\\.').replace(/\*/g, '.*');
+          const re = new RegExp('^' + pattern + '$');
+          if (!re.test(name)) continue;
+        }
+        if (opts.type === 'f' || !opts.type) results.push(full);
+      } else if (child.type === 'dir') {
+        if (opts.type === 'd') results.push(full);
+        results.push(...collectFiles(child, full, opts));
+      }
+    }
+    return results;
+  }
+
+  // ---------- Commands ----------
+  const commands = {
+    help() {
+      return `Supported commands for this lab:
+
+  find, locate
+  tar (-czvf, -tzvf)
+  ls, ls -lh, ls -la, pwd, cd, cat, mkdir, touch, rm
+  sudo apt update | apt search | apt install | apt remove
+  dpkg -l
+  tree
+  which, sshd -T, grep
+  clear, help
+  explain6 <text>   – Task 6 written answer
+  explain7 <text>   – Task 7 best-practices answer
+
+Type the exact commands from the lab tasks.
+Use ↑ / ↓ to recall previous commands.`;
+    },
+
+    pwd() { return cwd; },
+
+    cd(args) {
+      const target = args[0] || HOME;
+      const path = normalizePath(target);
+      const node = getNode(path);
+      if (!node) return { err: `bash: cd: ${target}: No such file or directory` };
+      if (node.type !== 'dir') return { err: `bash: cd: ${target}: Not a directory` };
+      cwd = path;
+      updatePrompt();
+      return null;
+    },
+
+    ls(args) {
+      let showAll = false, longFmt = false, human = false, pathArg = null;
+      for (const a of args) {
+        if (a.startsWith('-')) {
+          if (a.includes('a')) showAll = true;
+          if (a.includes('l')) longFmt = true;
+          if (a.includes('h')) human = true;
+        } else pathArg = a;
+      }
+      const path = pathArg ? normalizePath(pathArg) : cwd;
+      const node = getNode(path);
+      if (!node) return { err: `ls: cannot access '${pathArg || path}': No such file or directory` };
+
+      if (node.type === 'file') {
+        if (longFmt) {
+          const size = human ? humanSize(node.content?.length || 0) : String(node.content?.length || 0);
+          return `${modeToString(node.mode, 'file')} 1 ${node.owner} ${node.group} ${size.padStart(5)} Jan 15 12:00 ${pathArg || path.split('/').pop()}`;
+        }
+        return pathArg || path.split('/').pop();
+      }
+
+      let names = Object.keys(node.children);
+      if (!showAll) names = names.filter(n => !n.startsWith('.'));
+      names.sort();
+
+      if (longFmt) {
+        const lines = ['total ' + names.length * 4];
+        for (const n of names) {
+          const c = node.children[n];
+          let size = c.type === 'file' ? (c.content?.length || 0) : 4096;
+          if (human) size = humanSize(size);
+          else size = String(size);
+          lines.push(`${modeToString(c.mode, c.type)} 1 ${c.owner} ${c.group} ${String(size).padStart(5)} Jan 15 12:00 ${n}`);
+        }
+        return lines.join('\n');
+      }
+      return names.join('  ') || '';
+    },
+
+    cat(args) {
+      if (!args.length) return { err: 'cat: missing file operand' };
+      const results = [];
+      for (const a of args) {
+        const node = getNode(a);
+        if (!node) return { err: `cat: ${a}: No such file or directory` };
+        if (node.type === 'dir') return { err: `cat: ${a}: Is a directory` };
+        results.push(node.content || '');
+      }
+      return results.join('');
+    },
+
+    mkdir(args) {
+      if (!args.length) return { err: 'mkdir: missing operand' };
+      let parents = false;
+      const paths = [];
+      for (const a of args) {
+        if (a === '-p' || a === '--parents') parents = true;
+        else paths.push(a);
+      }
+      for (const p of paths) {
+        const full = normalizePath(p);
+        if (getNode(full)) continue;
+        if (parents) ensureDir(full);
+        else {
+          const { parent, name } = getParentAndName(full);
+          if (!parent) return { err: `mkdir: cannot create directory '${p}': No such file or directory` };
+          parent.children[name] = { type: 'dir', mode: '755', owner: 'student', group: 'student', children: {} };
+        }
+      }
+      return null;
+    },
+
+    touch(args) {
+      if (!args.length) return { err: 'touch: missing file operand' };
+      for (const p of args) {
+        const full = normalizePath(p);
+        if (getNode(full)) continue;
+        const { parent, name } = getParentAndName(full);
+        if (!parent) return { err: `touch: cannot touch '${p}': No such file or directory` };
+        parent.children[name] = { type: 'file', mode: '644', owner: 'student', group: 'student', content: '' };
+      }
+      return null;
+    },
+
+    rm(args) {
+      if (!args.length) return { err: 'rm: missing operand' };
+      let recursive = false, force = false;
+      const targets = [];
+      for (const a of args) {
+        if (a.startsWith('-')) {
+          if (a.includes('r') || a.includes('R')) recursive = true;
+          if (a.includes('f')) force = true;
+        } else targets.push(a);
+      }
+      for (const t of targets) {
+        const full = normalizePath(t);
+        const node = getNode(full);
+        if (!node) {
+          if (!force) return { err: `rm: cannot remove '${t}': No such file or directory` };
+          continue;
+        }
+        if (node.type === 'dir' && !recursive) {
+          return { err: `rm: cannot remove '${t}': Is a directory` };
+        }
+        const { parent, name } = getParentAndName(full);
+        if (parent) delete parent.children[name];
+        if (full === HOME + '/sysop-lab-backup.tar.gz') archiveCreated = false;
+      }
+      return null;
+    },
+
+    find(args) {
+      // find PATH -type f | find PATH -name "*.log" -type f
+      let startPath = '.';
+      let typeFilter = null;
+      let nameGlob = null;
+      let i = 0;
+      if (args.length && !args[0].startsWith('-')) {
+        startPath = args[0];
+        i = 1;
+      }
+      while (i < args.length) {
+        if (args[i] === '-type' && args[i + 1]) {
+          typeFilter = args[i + 1];
+          i += 2;
+        } else if (args[i] === '-name' && args[i + 1]) {
+          nameGlob = args[i + 1].replace(/^["']|["']$/g, '');
+          i += 2;
+        } else {
+          i++;
+        }
+      }
+
+      // handle pipe | head -N (simplified – just limit later)
+      const fullStart = normalizePath(startPath);
+      const node = getNode(fullStart);
+      if (!node) return { err: `find: '${startPath}': No such file or directory` };
+
+      const opts = {};
+      if (typeFilter === 'f') opts.type = 'f';
+      if (typeFilter === 'd') opts.type = 'd';
+      if (nameGlob) opts.nameGlob = nameGlob;
+
+      let results = [];
+      if (node.type === 'file') {
+        results = [fullStart];
+      } else {
+        results = collectFiles(node, fullStart, opts);
+      }
+      return results.join('\n') || '';
+    },
+
+    locate(args) {
+      const query = args[0] || '';
+      if (!query) return { err: 'locate: no pattern specified' };
+      // Simulated locate database
+      const db = [
+        '/etc/ssh/sshd_config',
+        '/usr/share/man/man5/sshd_config.5.gz',
+        '/usr/share/doc/openssh-server/examples/sshd_config'
+      ];
+      const hits = db.filter(p => p.toLowerCase().includes(query.toLowerCase()));
+      if (!hits.length) {
+        return 'locate database may need updating (sudo updatedb)';
+      }
+      return hits.join('\n');
+    },
+
+    tar(args) {
+      // tar -czvf FILE -C DIR NAME   or  tar -tzvf FILE
+      const flags = args.filter(a => a.startsWith('-')).join('');
+      const nonFlags = args.filter(a => !a.startsWith('-'));
+
+      if (flags.includes('c') && flags.includes('z') && flags.includes('f')) {
+        // create
+        let archivePath = null;
+        let changeDir = null;
+        let sourceName = null;
+        for (let i = 0; i < args.length; i++) {
+          if (args[i] === '-C' && args[i + 1]) {
+            changeDir = args[i + 1];
+            i++;
+          } else if (!args[i].startsWith('-') && !archivePath) {
+            archivePath = args[i];
+          } else if (!args[i].startsWith('-') && archivePath && !sourceName) {
+            sourceName = args[i];
+          }
+        }
+        if (!archivePath) return { err: 'tar: no archive file specified' };
+
+        // Resolve source
+        let srcPath;
+        if (changeDir) {
+          srcPath = normalizePath(changeDir + '/' + (sourceName || ''));
+        } else {
+          srcPath = normalizePath(sourceName || '.');
+        }
+        const srcNode = getNode(srcPath);
+        if (!srcNode) return { err: `tar: ${sourceName || srcPath}: Cannot stat: No such file or directory` };
+
+        // Build listing for -t later
+        archiveListing = [];
+        function walk(n, prefix) {
+          if (n.type === 'dir') {
+            archiveListing.push(prefix + '/');
+            for (const [k, c] of Object.entries(n.children)) {
+              walk(c, prefix + '/' + k);
+            }
+          } else {
+            archiveListing.push(prefix);
+          }
+        }
+        const rootName = sourceName || srcPath.split('/').pop();
+        walk(srcNode, rootName);
+
+        // Create archive file in FS
+        const fullArch = normalizePath(archivePath);
+        const { parent, name } = getParentAndName(fullArch);
+        if (!parent) return { err: `tar: cannot create ${archivePath}` };
+        const fakeSize = archiveListing.length * 120 + 512;
+        parent.children[name] = {
+          type: 'file',
+          mode: '644',
+          owner: 'student',
+          group: 'student',
+          content: 'GZIP_ARCHIVE_PLACEHOLDER_' + fakeSize,
+          size: fakeSize
+        };
+        archiveCreated = true;
+
+        // Verbose output
+        return archiveListing.map(p => p.endsWith('/') ? p : p).join('\n');
+      }
+
+      if (flags.includes('t') && flags.includes('f')) {
+        // list
+        const archPath = nonFlags[0];
+        if (!archPath) return { err: 'tar: no archive file specified' };
+        const node = getNode(archPath);
+        if (!node) return { err: `tar: ${archPath}: Cannot open: No such file or directory` };
+        if (!archiveListing.length) {
+          // generic listing if created earlier or empty
+          return 'sysop-lab/\nsysop-lab/docs/\nsysop-lab/docs/notes.txt\nsysop-lab/docs/readme.md\nsysop-lab/scripts/\nsysop-lab/scripts/test.sh\nsysop-lab/scripts/backup.sh\nsysop-lab/data/\nsysop-lab/data/sample.csv';
+        }
+        // verbose -tzvf style
+        return archiveListing.map(p => {
+          const isDir = p.endsWith('/');
+          const mode = isDir ? 'drwxr-xr-x' : '-rw-r--r--';
+          const size = isDir ? '0' : '128';
+          return `${mode} student/student ${size.padStart(6)} 2026-01-15 12:00 ${p}`;
+        }).join('\n');
+      }
+
+      return { err: 'tar: unsupported option combination (try -czvf or -tzvf)' };
+    },
+
+    // apt family – handled specially because of "sudo apt ..."
+    which(args) {
+      const cmd = args[0];
+      if (!cmd) return { err: 'which: missing argument' };
+      const known = {
+        ssh: '/usr/bin/ssh',
+        tar: '/usr/bin/tar',
+        find: '/usr/bin/find',
+        tree: packages.tree ? '/usr/bin/tree' : null,
+        apt: '/usr/bin/apt',
+        dpkg: '/usr/bin/dpkg'
+      };
+      if (known[cmd]) return known[cmd];
+      return { err: '' }; // which returns nothing / exit 1 when not found
+    },
+
+    tree(args) {
+      if (!packages.tree) {
+        return { err: 'bash: tree: command not found\n(Try: sudo apt install -y tree)' };
+      }
+      let pathArg = HOME + '/sysop-lab';
+      for (const a of args) {
+        if (!a.startsWith('-')) pathArg = a;
+      }
+      const rootPath = normalizePath(pathArg);
+      const node = getNode(rootPath);
+      if (!node) return { err: `tree: ${pathArg}: No such file or directory` };
+      if (node.type !== 'dir') return rootPath;
+
+      const lines = [rootPath];
+      function walk(n, prefix, depth) {
+        const keys = Object.keys(n.children).sort();
+        keys.forEach((k, idx) => {
+          const isLast = idx === keys.length - 1;
+          const branch = isLast ? '└── ' : '├── ';
+          const child = n.children[k];
+          lines.push(prefix + branch + k + (child.type === 'dir' ? '/' : ''));
+          if (child.type === 'dir') {
+            walk(child, prefix + (isLast ? '    ' : '│   '), depth + 1);
+          }
+        });
+      }
+      walk(node, '', 0);
+      lines.push('');
+      lines.push(`${countDirs(node)} directories, ${countFiles(node)} files`);
+      return lines.join('\n');
+    },
+
+    clear() {
+      outputEl.innerHTML = '';
+      return null;
+    },
+
+    explain6(args) {
+      const text = args.join(' ').trim();
+      if (!text || text.length < 20) {
+        return { err: 'Usage: explain6 <your 2-3 sentence answer about key-based SSH and apt update>' };
+      }
+      explain6Text = text;
+      return { info: '✓ Task 6 explanation recorded. Continue or click Submit Assessment.' };
+    },
+
+    explain7(args) {
+      const text = args.join(' ').trim();
+      if (!text || text.length < 15) {
+        return { err: 'Usage: explain7 <list three best practices you will apply>' };
+      }
+      explain7Text = text;
+      return { info: '✓ Task 7 best practices recorded. Continue or click Submit Assessment.' };
+    }
+  };
+
+  function humanSize(bytes) {
+    if (bytes < 1024) return bytes + 'B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + 'K';
+    return (bytes / (1024 * 1024)).toFixed(1) + 'M';
+  }
+
+  function countDirs(node) {
+    let n = 0;
+    for (const c of Object.values(node.children || {})) {
+      if (c.type === 'dir') { n++; n += countDirs(c); }
+    }
+    return n;
+  }
+  function countFiles(node) {
+    let n = 0;
+    for (const c of Object.values(node.children || {})) {
+      if (c.type === 'file') n++;
+      else n += countFiles(c);
+    }
+    return n;
+  }
+
+  // ---------- Special multi-word / sudo handlers ----------
+  function handleApt(tokens) {
+    // tokens already split; first may be "sudo"
+    let i = 0;
+    if (tokens[0] === 'sudo') i = 1;
+    if (tokens[i] !== 'apt' && tokens[i] !== 'apt-get') {
+      return { err: `bash: ${tokens[0]}: command not found` };
+    }
+    i++;
+    const sub = tokens[i] || '';
+    const rest = tokens.slice(i + 1);
+
+    if (sub === 'update') {
+      aptUpdated = true;
+      return `Hit:1 http://archive.ubuntu.com/ubuntu jammy InRelease
+Hit:2 http://security.ubuntu.com/ubuntu jammy-security InRelease
+Hit:3 http://archive.ubuntu.com/ubuntu jammy-updates InRelease
+Reading package lists... Done
+Building dependency tree... Done
+All packages are up to date.`;
+    }
+
+    if (sub === 'search') {
+      const q = rest[0] || '';
+      // ignore | head
+      const results = [
+        'Sorting... Done',
+        'Full Text Search... Done',
+        'tree/jammy 2.1.1-1 amd64',
+        '  displays an indented directory tree, in color',
+        'tree-puzzle/jammy 5.3~rc16+dfsg-9 amd64',
+        '  Reconstruction of phylogenetic trees by maximum likelihood',
+        'r-cran-tree/jammy 1.0-43-1 amd64',
+        '  GNU R classification and regression trees'
+      ];
+      if (q && !q.includes('tree')) {
+        return `Sorting... Done\nFull Text Search... Done\n(no results for "${q}")`;
+      }
+      return results.join('\n');
+    }
+
+    if (sub === 'install') {
+      const pkgs = rest.filter(t => !t.startsWith('-'));
+      const yes = rest.includes('-y') || rest.includes('--yes');
+      if (!pkgs.length) return { err: 'E: No packages specified' };
+      if (!aptUpdated) {
+        // still allow but warn lightly
+      }
+      let out = 'Reading package lists... Done\nBuilding dependency tree... Done\n';
+      for (const p of pkgs) {
+        if (p === 'tree') {
+          packages.tree = true;
+          out += `The following NEW packages will be installed:\n  tree\n0 upgraded, 1 newly installed, 0 to remove.\nNeed to get 47.9 kB of archives.\nAfter this operation, 115 kB of additional disk space will be used.\n`;
+          if (yes) out += 'Selecting previously unselected package tree.\n(Reading database ... 45000 files and directories currently installed.)\nPreparing to unpack .../tree_2.1.1-1_amd64.deb ...\nUnpacking tree (2.1.1-1) ...\nSetting up tree (2.1.1-1) ...\n';
+          else out += 'Do you want to continue? [Y/n] Y\nSetting up tree (2.1.1-1) ...\n';
+        } else {
+          out += `E: Unable to locate package ${p}\n`;
+        }
+      }
+      return out.trim();
+    }
+
+    if (sub === 'remove' || sub === 'purge') {
+      const pkgs = rest.filter(t => !t.startsWith('-'));
+      let out = '';
+      for (const p of pkgs) {
+        if (p === 'tree' && packages.tree) {
+          packages.tree = false;
+          out += 'Reading package lists... Done\nThe following packages will be REMOVED:\n  tree\n0 upgraded, 0 newly installed, 1 to remove.\nAfter this operation, 115 kB disk space will be freed.\nRemoving tree (2.1.1-1) ...\n';
+        } else {
+          out += `Package '${p}' is not installed, so not removed\n`;
+        }
+      }
+      return out.trim() || 'Nothing to do.';
+    }
+
+    return { err: `E: Invalid operation ${sub}` };
+  }
+
+  function handleDpkg(tokens) {
+    // dpkg -l tree
+    if (tokens[1] === '-l' || tokens[1] === '--list') {
+      const pkg = tokens[2] || '';
+      if (pkg === 'tree') {
+        if (packages.tree) {
+          return `Desired=Unknown/Install/Remove/Purge/Hold\n| Status=Not/Inst/Conf-files/Unpacked/halF-conf/Half-inst/trig-aWait/Trig-pend\n|/ Err?=(none)/Reinst-required (Status,Err: uppercase=bad)\n||/ Name           Version      Architecture Description\n+++-==============-============-============-=================================\nii  tree           2.1.1-1      amd64        displays an indented directory tree, in color`;
+        }
+        return `dpkg-query: no packages found matching tree`;
+      }
+      return `dpkg-query: no packages found matching ${pkg || '*'}`;
+    }
+    return { err: 'dpkg: unsupported option in this simulator (try dpkg -l <package>)' };
+  }
+
+  function handleSshd(tokens) {
+    // sshd -T | grep ...
+    // We just emit the relevant lines
+    return `port 22\npermitrootlogin no`;
+  }
+
+  // ---------- Dispatcher ----------
+  function runCommand(raw) {
+    const trimmed = raw.trim();
+    if (!trimmed) return;
+
+    printPromptAndCmd(trimmed);
+    commandLog.push(trimmed);
+    history.push(trimmed);
+    historyIndex = history.length;
+
+    // Support simple pipelines: cmd | head -N  (we strip the pipe for processing)
+    let workLine = trimmed;
+    let headLimit = null;
+    const pipeMatch = trimmed.match(/\|\s*head\s+-(\d+)/);
+    if (pipeMatch) {
+      headLimit = parseInt(pipeMatch[1], 10);
+      workLine = trimmed.replace(/\|\s*head\s+-\d+/, '').trim();
+    }
+    // also swallow 2>/dev/null
+    workLine = workLine.replace(/\s*2>\s*\/dev\/null/g, '').trim();
+
+    // Tokenize
+    const tokens = tokenize(workLine);
+    if (!tokens.length) return;
+
+    const cmd = tokens[0];
+
+    // Special compound handlers
+    if (cmd === 'sudo' && (tokens[1] === 'apt' || tokens[1] === 'apt-get')) {
+      const result = handleApt(tokens);
+      emitResult(result, headLimit);
+      return;
+    }
+    if (cmd === 'apt' || cmd === 'apt-get') {
+      const result = handleApt(tokens);
+      emitResult(result, headLimit);
+      return;
+    }
+    if (cmd === 'dpkg') {
+      const result = handleDpkg(tokens);
+      emitResult(result, headLimit);
+      return;
+    }
+    if (cmd === 'sshd') {
+      const result = handleSshd(tokens);
+      emitResult(result, headLimit);
+      return;
+    }
+
+    // grep as filter is ignored when used after |; standalone not needed
+    if (cmd === 'grep') {
+      appendLine('(grep filter applied in pipeline context)', 'term-info');
+      return;
+    }
+
+    const handler = commands[cmd];
+    if (!handler) {
+      appendLine(`bash: ${escapeHtml(cmd)}: command not found`, 'term-err');
+      return;
+    }
+
+    const result = handler(tokens.slice(1));
+    emitResult(result, headLimit);
+  }
+
+  function emitResult(result, headLimit) {
+    if (result == null) return;
+    if (typeof result === 'string') {
+      let text = result;
+      if (headLimit != null) {
+        text = text.split('\n').slice(0, headLimit).join('\n');
+      }
+      if (text) appendLine(escapeHtml(text), 'term-out');
+      return;
+    }
+    if (result.err) {
+      if (result.err) appendLine(escapeHtml(result.err), 'term-err');
+      return;
+    }
+    if (result.info) {
+      appendLine(escapeHtml(result.info), 'term-info');
+    }
+  }
+
+  function tokenize(line) {
+    const tokens = [];
+    let cur = '';
+    let inQuote = false;
+    let quoteChar = '';
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if ((ch === '"' || ch === "'") && !inQuote) {
+        inQuote = true;
+        quoteChar = ch;
+        continue;
+      }
+      if (inQuote && ch === quoteChar) {
+        inQuote = false;
+        continue;
+      }
+      if (!inQuote && /\s/.test(ch)) {
+        if (cur) { tokens.push(cur); cur = ''; }
+        continue;
+      }
+      cur += ch;
+    }
+    if (cur) tokens.push(cur);
+    return tokens;
+  }
+
+  // ---------- Input ----------
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const val = inputEl.value;
+      inputEl.value = '';
+      runCommand(val);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (historyIndex > 0) {
+        historyIndex--;
+        inputEl.value = history[historyIndex] || '';
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (historyIndex < history.length - 1) {
+        historyIndex++;
+        inputEl.value = history[historyIndex] || '';
+      } else {
+        historyIndex = history.length;
+        inputEl.value = '';
+      }
+    }
+  });
+
+  // ---------- Grading ----------
+  function evaluateLab() {
+    const log = commandLog.map(c => c.toLowerCase().trim());
+    const has = (substr) => log.some(c => c.includes(substr));
+
+    const results = { well: [], improve: [], score: 0, max: 0 };
+
+    // Task 1 – find / locate (5 pts)
+    results.max += 5;
+    if (has('find') && has('sysop-lab') && has('-type')) {
+      results.score += 2;
+      results.well.push('Used `find ~/sysop-lab -type f` to list files');
+    } else {
+      results.improve.push('Missing or incomplete: `find ~/sysop-lab -type f`');
+    }
+    if (has('find') && has('/var/log') && (has('*.log') || has('-name'))) {
+      results.score += 2;
+      results.well.push('Searched `/var/log` for `*.log` files with find');
+    } else {
+      results.improve.push('Missing: `find /var/log -name "*.log" -type f`');
+    }
+    if (has('locate') && has('sshd_config')) {
+      results.score += 1;
+      results.well.push('Used `locate sshd_config`');
+    } else {
+      results.improve.push('Missing: `locate sshd_config`');
+    }
+
+    // Task 2 – tar archive (5 pts)
+    results.max += 5;
+    if (has('tar') && (has('-czvf') || (has('-c') && has('-z') && has('-f'))) && has('sysop-lab-backup')) {
+      results.score += 2;
+      results.well.push('Created compressed archive with `tar -czvf`');
+    } else {
+      results.improve.push('Missing: `tar -czvf ~/sysop-lab-backup.tar.gz -C ~ sysop-lab`');
+    }
+    if (has('tar') && (has('-tzvf') || (has('-t') && has('-z') && has('-f')))) {
+      results.score += 2;
+      results.well.push('Listed archive contents with `tar -tzvf`');
+    } else {
+      results.improve.push('Missing: `tar -tzvf ~/sysop-lab-backup.tar.gz`');
+    }
+    if (has('ls') && (has('-lh') || has('-hl')) && has('sysop-lab-backup')) {
+      results.score += 1;
+      results.well.push('Checked archive size with `ls -lh`');
+    } else {
+      results.improve.push('Missing: `ls -lh ~/sysop-lab-backup.tar.gz`');
+    }
+    // FS state bonus already covered by score above
+    if (archiveCreated || getNode(HOME + '/sysop-lab-backup.tar.gz')) {
+      // already awarded via commands
+    }
+
+    // Task 3 – apt basics (4 pts)
+    results.max += 4;
+    if (has('apt update') || has('apt-get update')) {
+      results.score += 2;
+      results.well.push('Ran `sudo apt update` (or apt-get update)');
+    } else {
+      results.improve.push('Missing: `sudo apt update`');
+    }
+    if (has('apt search') && has('tree')) {
+      results.score += 1;
+      results.well.push('Searched for the tree package with `apt search`');
+    } else {
+      results.improve.push('Missing: `apt search tree`');
+    }
+    if (has('dpkg') && has('tree')) {
+      results.score += 1;
+      results.well.push('Checked package status with `dpkg -l tree`');
+    } else {
+      results.improve.push('Missing: `dpkg -l tree`');
+    }
+
+    // Task 4 – install tree + run (4 pts)
+    results.max += 4;
+    if ((has('apt install') || has('apt-get install')) && has('tree')) {
+      results.score += 2;
+      results.well.push('Installed tree with `sudo apt install -y tree`');
+    } else {
+      results.improve.push('Missing: `sudo apt install -y tree`');
+    }
+    if (has('tree') && has('sysop-lab')) {
+      results.score += 2;
+      results.well.push('Ran `tree ~/sysop-lab` after installation');
+    } else if (packages.tree) {
+      results.score += 1;
+      results.well.push('tree package is installed (run `tree ~/sysop-lab` to view structure)');
+      results.improve.push('Install succeeded but `tree ~/sysop-lab` was not run');
+    } else {
+      results.improve.push('Missing: install and run `tree ~/sysop-lab`');
+    }
+
+    // Task 5 – SSH (3 pts)
+    results.max += 3;
+    if (has('which ssh') || (has('which') && has('ssh'))) {
+      results.score += 1;
+      results.well.push('Confirmed SSH client location with `which ssh`');
+    } else {
+      results.improve.push('Missing: `which ssh`');
+    }
+    if (has('sshd') || has('permitrootlogin') || has('sshd -t')) {
+      results.score += 1;
+      results.well.push('Inspected sshd settings (port / PermitRootLogin)');
+    } else {
+      results.improve.push('Missing: `sshd -T | grep ...` (or equivalent check)');
+    }
+    if (has('ls') && has('/etc/ssh')) {
+      results.score += 1;
+      results.well.push('Listed files under `/etc/ssh/`');
+    } else {
+      results.improve.push('Missing: `ls /etc/ssh/`');
+    }
+
+    // Task 6 – explanation (3 pts)
+    results.max += 3;
+    if (explain6Text && explain6Text.length > 30) {
+      const lower = explain6Text.toLowerCase();
+      let pts = 1;
+      if (lower.includes('key') && (lower.includes('password') || lower.includes('guess') || lower.includes('auth'))) pts++;
+      if (lower.includes('update') && (lower.includes('package') || lower.includes('index') || lower.includes('cache') || lower.includes('patch') || lower.includes('security'))) pts++;
+      results.score += Math.min(pts, 3);
+      results.well.push('Provided explanation for key-based SSH and apt/dnf update');
+    } else {
+      results.improve.push('Task 6 missing or too short. Use: explain6 <your answer>');
+    }
+
+    // Task 7 – best practices (3 pts)
+    results.max += 3;
+    if (explain7Text && explain7Text.length > 20) {
+      results.score += 3;
+      results.well.push('Listed best practices for everyday Linux work');
+    } else {
+      results.improve.push('Task 7 missing. Use: explain7 <three best practices>');
+    }
+
+    return results;
+  }
+
+  function showFeedback() {
+    const r = evaluateLab();
+    const pct = Math.round((r.score / r.max) * 100);
+    let status, bannerClass;
+    if (pct >= 90) { status = '🏆 Mastered'; bannerClass = 'score-mastered'; }
+    else if (pct >= 70) { status = '✓ Proficient – Minor Revisions'; bannerClass = 'score-partial'; }
+    else if (pct >= 50) { status = '🟡 Needs Revision'; bannerClass = 'score-partial'; }
+    else { status = '🔴 Incomplete – Please Retry'; bannerClass = 'score-needs'; }
+
+    let html = `
+      <div class="score-banner ${bannerClass}">
+        ${status}<br>
+        <span style="font-size:0.95rem;font-weight:500;">Score: ${r.score} / ${r.max} (${pct}%)</span>
+        <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+      </div>
+    `;
+
+    if (r.well.length) {
+      html += `<div class="fb-section"><h3>🟢 What you did well</h3><ul>`;
+      r.well.forEach(w => { html += `<li>${w}</li>`; });
+      html += `</ul></div>`;
+    }
+
+    if (r.improve.length) {
+      html += `<div class="fb-section"><h3>🟡 Areas to improve</h3><ul>`;
+      r.improve.forEach(w => { html += `<li>${w}</li>`; });
+      html += `</ul></div>`;
+    }
+
+    html += `
+      <div class="fb-section">
+        <h3>📌 Next steps</h3>
+        <ul>
+          <li>Re-run any missing commands listed above.</li>
+          <li>For written answers use <code style="color:var(--cnm-gold)">explain6 …</code> and <code style="color:var(--cnm-gold)">explain7 …</code>.</li>
+          <li>Click <strong>Reset Lab</strong> for a clean slate if needed.</li>
+        </ul>
+      </div>
+    `;
+
+    document.getElementById('modal-body').innerHTML = html;
+    document.getElementById('feedback-modal').classList.add('open');
+  }
+
+  // ---------- Reset ----------
+  function resetLab() {
+    fs = initialFS();
+    cwd = HOME;
+    history = [];
+    historyIndex = -1;
+    commandLog = [];
+    explain6Text = '';
+    explain7Text = '';
+    packages = { tree: false };
+    aptUpdated = false;
+    archiveCreated = false;
+    archiveListing = [];
+    outputEl.innerHTML = '';
+    updatePrompt();
+    appendLine('Lab reset. Virtual filesystem and package state restored.', 'term-info');
+    appendLine('~/sysop-lab is ready with sample files. Type <span style="color:var(--cnm-gold)">help</span> for commands.', 'term-out');
+    inputEl.focus();
+  }
+
+  // ---------- Wire UI ----------
+  document.getElementById('btn-submit').addEventListener('click', showFeedback);
+  document.getElementById('btn-reset').addEventListener('click', () => {
+    if (confirm('Reset the lab? All command history, archives, and package state will be lost.')) {
+      resetLab();
+    }
+  });
+  document.getElementById('btn-help').addEventListener('click', () => {
+    runCommand('help');
+    inputEl.focus();
+  });
+  document.getElementById('modal-close').addEventListener('click', () => {
+    document.getElementById('feedback-modal').classList.remove('open');
+  });
+  document.getElementById('feedback-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'feedback-modal') {
+      document.getElementById('feedback-modal').classList.remove('open');
+    }
+  });
+
+  // ---------- Boot ----------
+  updatePrompt();
+  appendLine('Welcome to the CIST 1680 Formative Assessment 3 simulator.', 'term-info');
+  appendLine('Central New Mexico Community College · Linux Essentials', 'term-out');
+  appendLine('', 'term-out');
+  appendLine('Pre-loaded workspace: <span style="color:var(--cnm-gold)">~/sysop-lab</span> (docs, scripts, data)', 'term-out');
+  appendLine('Follow the tasks on the left. When finished, click <strong style="color:var(--cnm-gold)">Submit Assessment</strong>.', 'term-out');
+  appendLine('', 'term-out');
+  appendLine('student@cnm-lab:~$ <span style="color:var(--text-muted)"># ready – try: find ~/sysop-lab -type f</span>', 'term-out');
+
+  inputEl.focus();
+  </script>
+</body>
+</html>
 
