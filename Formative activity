@@ -1,1 +1,1182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CIST 1680 · Formative Assessment 1 — CLI, Users &amp; Filesystem</title>
+<style>
+  :root{
+    --bg:#0b1320;
+    --card:#131e30;
+    --card-alt:#0f1826;
+    --term-bg:#0a0f1a;
+    --border:#22314a;
+    --border-soft:#1a273d;
+    --gold:#F6BE00;
+    --sky:#41B6E6;
+    --text:#e7edf5;
+    --text-dim:#8fa1b8;
+    --text-faint:#5b7089;
+    --green:#4ADE80;
+    --amber:#F0A93A;
+    --red:#F87171;
+    --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --radius: 10px;
+  }
 
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    min-height:100vh;
+  }
+
+  body{
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(65,182,230,0.07), transparent 40%),
+      radial-gradient(circle at 85% 10%, rgba(246,190,0,0.06), transparent 40%);
+    background-attachment:fixed;
+  }
+
+  .sr-only{
+    position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+    overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+  }
+
+  a{ color:var(--sky); }
+
+  /* ---------- Header ---------- */
+  header.site-header{
+    padding:20px clamp(16px, 4vw, 40px);
+    display:flex; align-items:center; gap:16px;
+    border-bottom:1px solid var(--border-soft);
+    background:rgba(11,19,32,0.85);
+    backdrop-filter: blur(6px);
+    position:sticky; top:0; z-index:20;
+  }
+  .cnm-badge{
+    font-family:var(--mono);
+    font-weight:700;
+    font-size:15px;
+    letter-spacing:0.06em;
+    background:var(--gold);
+    color:#1a1400;
+    padding:6px 10px;
+    border-radius:6px;
+    flex-shrink:0;
+  }
+  .header-text h1{
+    font-family:var(--mono);
+    font-size:clamp(15px,2.2vw,19px);
+    margin:0 0 2px 0;
+    color:var(--text);
+    font-weight:600;
+    letter-spacing:0.01em;
+  }
+  .header-text p{
+    margin:0;
+    font-size:12.5px;
+    color:var(--text-dim);
+    font-family:var(--mono);
+  }
+  .header-text p .sep{ color:var(--text-faint); margin:0 6px; }
+  .header-text p .accent{ color:var(--sky); }
+
+  /* ---------- Layout ---------- */
+  main.layout{
+    display:grid;
+    grid-template-columns: 380px 1fr;
+    gap:22px;
+    padding:22px clamp(16px, 4vw, 40px) 60px;
+    max-width:1400px;
+    margin:0 auto;
+    align-items:start;
+  }
+  @media (max-width: 920px){
+    main.layout{ grid-template-columns: 1fr; }
+  }
+
+  /* ---------- Instructions panel ---------- */
+  .panel{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:18px 18px 20px;
+  }
+  .panel + .panel{ margin-top:18px; }
+  .panel-sticky{ position:sticky; top:96px; }
+  @media (max-width: 920px){ .panel-sticky{ position:static; } }
+
+  .panel h2{
+    font-family:var(--mono);
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--sky);
+    margin:0 0 4px 0;
+  }
+  .panel .outcomes{
+    font-size:12px;
+    color:var(--text-faint);
+    margin:0 0 14px 0;
+    line-height:1.5;
+  }
+
+  details.task{
+    border-top:1px solid var(--border-soft);
+    padding:10px 0;
+  }
+  details.task:first-of-type{ border-top:none; padding-top:2px; }
+  details.task summary{
+    cursor:pointer;
+    list-style:none;
+    display:flex;
+    align-items:baseline;
+    gap:8px;
+    font-family:var(--mono);
+    font-size:13px;
+    color:var(--text);
+    font-weight:600;
+  }
+  details.task summary::-webkit-details-marker{ display:none; }
+  details.task summary::before{
+    content:"▸";
+    color:var(--gold);
+    transition:transform .15s ease;
+    font-size:11px;
+  }
+  details.task[open] summary::before{ transform:rotate(90deg); }
+  details.task .task-label{ color:var(--gold); }
+  details.task .task-body{
+    padding:10px 4px 2px 18px;
+    font-size:13px;
+    line-height:1.55;
+    color:var(--text-dim);
+  }
+  details.task .task-body p{ margin:0 0 8px 0; }
+  details.task pre{
+    background:var(--card-alt);
+    border:1px solid var(--border-soft);
+    border-radius:6px;
+    padding:9px 11px;
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--sky);
+    overflow-x:auto;
+    margin:6px 0 10px 0;
+    line-height:1.6;
+  }
+  details.task .verify{
+    margin-top:8px;
+    padding:8px 10px;
+    background:rgba(246,190,0,0.06);
+    border-left:2px solid var(--gold);
+    border-radius:0 6px 6px 0;
+    font-size:12px;
+    color:var(--text-dim);
+  }
+  details.task .verify b{ color:var(--gold); font-family:var(--mono); font-size:11px; letter-spacing:0.04em; }
+
+  .reflection{
+    margin-top:14px;
+    padding-top:14px;
+    border-top:1px solid var(--border-soft);
+  }
+  .reflection p{ font-size:12.5px; color:var(--text-dim); line-height:1.5; margin:0 0 8px; }
+  .reflection textarea{
+    width:100%;
+    min-height:70px;
+    resize:vertical;
+    background:var(--card-alt);
+    border:1px solid var(--border-soft);
+    border-radius:6px;
+    color:var(--text);
+    font-family:var(--sans);
+    font-size:12.5px;
+    padding:8px 10px;
+  }
+  .reflection textarea:focus-visible, .panel a:focus-visible{
+    outline:2px solid var(--sky); outline-offset:2px;
+  }
+  .reflection .note{
+    font-size:11.5px;
+    color:var(--text-faint);
+    margin-top:6px;
+  }
+
+  .checklist{ list-style:none; margin:0; padding:0; font-size:12.5px; color:var(--text-dim); }
+  .checklist li{ display:flex; gap:8px; padding:4px 0; }
+  .checklist li::before{ content:"☐"; color:var(--sky); }
+
+  /* ---------- Terminal ---------- */
+  .term-wrap{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    overflow:hidden;
+    box-shadow: 0 0 0 1px rgba(65,182,230,0.03), 0 20px 60px -20px rgba(0,0,0,0.6);
+  }
+  .term-titlebar{
+    display:flex; align-items:center; gap:8px;
+    padding:10px 14px;
+    background:linear-gradient(180deg, #16223a, #111b2e);
+    border-bottom:1px solid var(--border);
+  }
+  .dot{ width:11px; height:11px; border-radius:50%; display:inline-block; }
+  .dot.red{ background:#ff5f57; }
+  .dot.yellow{ background:#febc2e; }
+  .dot.green{ background:#28c840; }
+  .term-title{
+    flex:1;
+    text-align:center;
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--text-faint);
+    margin-right:34px;
+  }
+
+  .term-body{
+    position:relative;
+    background:var(--term-bg);
+    height:min(52vh, 480px);
+    min-height:320px;
+    overflow-y:auto;
+    padding:14px 16px;
+    font-family:var(--mono);
+    font-size:13px;
+    line-height:1.6;
+  }
+  .term-body::before{
+    content:"";
+    position:absolute; inset:0;
+    pointer-events:none;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.015),
+      rgba(255,255,255,0.015) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    mix-blend-mode:overlay;
+  }
+  .line{ white-space:pre-wrap; word-break:break-word; }
+  .line.echo{ color:var(--text); }
+  .line.echo .p-user{ color:var(--green); }
+  .line.echo .p-host{ color:var(--green); }
+  .line.echo .p-path{ color:var(--sky); }
+  .line.echo .p-sym{ color:var(--text-dim); }
+  .line.out{ color:var(--text-dim); }
+  .line.err{ color:var(--red); }
+  .line.muted{ color:var(--text-faint); font-style:italic; }
+  .line.dir-entry{ color:var(--sky); }
+
+  .term-inputline{
+    display:flex; align-items:center; gap:8px;
+    padding:10px 16px 14px;
+    background:var(--term-bg);
+    border-top:1px solid var(--border-soft);
+    font-family:var(--mono);
+    font-size:13px;
+  }
+  .prompt{ color:var(--sky); white-space:nowrap; user-select:none; }
+  .prompt .p-user{ color:var(--green); }
+  #termInput{
+    flex:1;
+    background:transparent;
+    border:none;
+    outline:none;
+    color:var(--text);
+    font-family:var(--mono);
+    font-size:13px;
+    caret-color:var(--gold);
+  }
+
+  .actions-row{
+    display:flex; gap:12px; margin-top:16px; flex-wrap:wrap;
+  }
+  .btn{
+    font-family:var(--mono);
+    font-size:13px;
+    font-weight:600;
+    letter-spacing:0.02em;
+    padding:11px 20px;
+    border-radius:8px;
+    border:1px solid transparent;
+    cursor:pointer;
+    transition:transform .08s ease, filter .12s ease;
+  }
+  .btn:active{ transform:translateY(1px); }
+  .btn:focus-visible{ outline:2px solid var(--sky); outline-offset:2px; }
+  .btn-primary{
+    background:var(--gold);
+    color:#1a1400;
+  }
+  .btn-primary:hover{ filter:brightness(1.08); }
+  .btn-ghost{
+    background:transparent;
+    color:var(--sky);
+    border-color:var(--border);
+  }
+  .btn-ghost:hover{ border-color:var(--sky); }
+
+  .hint-strip{
+    margin-top:12px;
+    font-size:11.5px;
+    color:var(--text-faint);
+    font-family:var(--mono);
+  }
+  .hint-strip kbd{
+    background:var(--card-alt);
+    border:1px solid var(--border-soft);
+    border-radius:4px;
+    padding:1px 5px;
+    font-family:var(--mono);
+    color:var(--text-dim);
+  }
+
+  /* ---------- Modal (man-page styled report) ---------- */
+  .modal-overlay{
+    position:fixed; inset:0;
+    background:rgba(3,7,14,0.75);
+    display:flex; align-items:center; justify-content:center;
+    padding:20px;
+    z-index:100;
+  }
+  .modal-overlay[hidden]{ display:none; }
+  .modal-card{
+    width:min(720px, 100%);
+    max-height:88vh;
+    overflow-y:auto;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:0 30px 80px -20px rgba(0,0,0,0.7);
+    font-family:var(--mono);
+  }
+  .man-header, .man-footer{
+    display:flex; justify-content:space-between;
+    padding:10px 20px;
+    font-size:11px;
+    color:var(--text-faint);
+    background:var(--card-alt);
+  }
+  .man-header{ border-bottom:1px solid var(--border-soft); }
+  .man-footer{ border-top:1px solid var(--border-soft); }
+  .modal-body{ padding:20px 22px 6px; }
+  .modal-body h3{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.1em;
+    color:var(--text-faint);
+    margin:20px 0 8px;
+  }
+  .modal-body h3:first-child{ margin-top:0; }
+  .score-block{
+    display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;
+    padding:14px 16px;
+    background:var(--card-alt);
+    border:1px solid var(--border-soft);
+    border-radius:8px;
+  }
+  .score-num{ font-size:36px; font-weight:700; color:var(--gold); }
+  .score-status{ font-size:14px; color:var(--sky); font-weight:600; }
+  .score-sub{ font-size:11.5px; color:var(--text-faint); width:100%; }
+  .report-list{ list-style:none; margin:0; padding:0; }
+  .report-list li{
+    display:flex; gap:10px;
+    padding:6px 0;
+    font-size:12.5px;
+    color:var(--text-dim);
+    line-height:1.5;
+    font-family:var(--sans);
+  }
+  .report-list li .icon{ flex-shrink:0; }
+  .report-list.good li .icon{ color:var(--green); }
+  .report-list.improve li .icon{ color:var(--amber); }
+  .modal-close-row{
+    padding:16px 22px 22px;
+    display:flex; justify-content:flex-end;
+    gap:10px;
+  }
+
+  ::-webkit-scrollbar{ width:10px; height:10px; }
+  ::-webkit-scrollbar-track{ background:transparent; }
+  ::-webkit-scrollbar-thumb{ background:var(--border); border-radius:6px; }
+  ::-webkit-scrollbar-thumb:hover{ background:var(--text-faint); }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition:none !important; }
+  }
+
+  footer.site-footer{
+    text-align:center;
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--text-faint);
+    padding:0 20px 30px;
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <span class="cnm-badge">CNM</span>
+  <div class="header-text">
+    <h1>Formative Assessment 1 — Command Line Basics, Users &amp; Filesystem</h1>
+    <p>CIST 1680 · Linux Essentials <span class="sep">|</span> MLO 1–5 <span class="sep">|</span> <span class="accent">Interactive practice terminal</span></p>
+  </div>
+</header>
+
+<main class="layout">
+
+  <!-- ============ INSTRUCTIONS PANEL ============ -->
+  <div>
+    <section class="panel panel-sticky">
+      <h2>Scenario &amp; Objectives</h2>
+      <p class="outcomes">Aligned outcomes: command-line navigation, user identity, system information, filesystem hierarchy, and basic permissions. Work through Parts A–C below in the terminal on the right, then click <strong style="color:var(--gold)">Submit Assessment</strong> to check your work against the rubric. This simulator is for practice — you still fill out the official worksheet with your real output.</p>
+
+      <details class="task" open>
+        <summary><span class="task-label">Part A</span> · Identity, History &amp; System Info</summary>
+        <div class="task-body">
+          <p><strong>Task 1</strong> — Run the identity and system information commands:</p>
+          <pre>whoami
+id
+hostname
+uname -a
+uptime</pre>
+          <div class="verify"><b>VERIFY</b><br/>Record your username, UID, hostname, kernel version, and system uptime.</div>
+          <p style="margin-top:12px;"><strong>Task 2</strong> — Display history and practice the shortcut:</p>
+          <pre>history | tail -10
+!!</pre>
+          <div class="verify"><b>VERIFY</b><br/>Note the last command in history and confirm <code>!!</code> repeated it.</div>
+        </div>
+      </details>
+
+      <details class="task">
+        <summary><span class="task-label">Part B</span> · Filesystem Navigation</summary>
+        <div class="task-body">
+          <p><strong>Task 3</strong> — Navigate and build a directory structure:</p>
+          <pre>pwd
+mkdir -p ~/sysop-lab/docs ~/sysop-lab/scripts
+cd ~/sysop-lab
+pwd
+touch docs/notes.txt scripts/test.sh
+ls -la</pre>
+          <div class="verify"><b>VERIFY</b><br/>Paste the final <code>ls -la</code> output and your working directory.</div>
+          <p style="margin-top:12px;"><strong>Task 4</strong> — Visualize the tree and practice the directory stack:</p>
+          <pre>tree -L 2 ~/sysop-lab
+pushd /tmp
+pwd
+popd
+pwd</pre>
+          <div class="verify"><b>VERIFY</b><br/>Sketch the tree output and list the two directories shown by pushd/popd.</div>
+        </div>
+      </details>
+
+      <details class="task">
+        <summary><span class="task-label">Part C</span> · Permissions Basics</summary>
+        <div class="task-body">
+          <p><strong>Task 5</strong> — Examine and change permissions on the test script:</p>
+          <pre>ls -l ~/sysop-lab/scripts/test.sh
+chmod 755 ~/sysop-lab/scripts/test.sh
+ls -l ~/sysop-lab/scripts/test.sh
+stat ~/sysop-lab/scripts/test.sh</pre>
+          <div class="verify"><b>VERIFY</b><br/>Write the permission string before and after <code>chmod 755</code>, and note the Access line from stat.</div>
+          <div class="reflection">
+            <p><strong>Task 6 (written, not graded here)</strong> — In 2–3 sentences, explain the difference between a regular user and the root user, and why administrators prefer <code>sudo</code> over logging in directly as root. Jot notes below for yourself, then transfer your answer to the official worksheet.</p>
+            <textarea id="reflectionNotes" placeholder="Type your notes here (kept only in this browser tab)..." aria-label="Task 6 reflection notes"></textarea>
+            <p class="note">This box isn't scored by Submit Assessment — it's just scratch space.</p>
+          </div>
+        </div>
+      </details>
+
+      <div class="reflection">
+        <p style="margin-bottom:6px;"><strong style="color:var(--sky)">Submission checklist</strong></p>
+        <ul class="checklist">
+          <li>All verification boxes filled with actual command output</li>
+          <li>Directory structure created and permissions changed</li>
+          <li>Written explanation (Task 6) completed on your worksheet</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+
+  <!-- ============ TERMINAL ============ -->
+  <div>
+    <div class="term-wrap">
+      <div class="term-titlebar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="term-title" id="termTitleBar">student@cnm-lab: ~ — 80×24</span>
+      </div>
+      <div class="term-body" id="termOutput" role="log" aria-live="polite" aria-label="Terminal output"></div>
+      <div class="term-inputline">
+        <label for="termInput" class="sr-only">Command input</label>
+        <span class="prompt" id="promptLabel"><span class="p-user">student@cnm-lab</span>:~$</span>
+        <input type="text" id="termInput" autocomplete="off" autocapitalize="off" spellcheck="false" />
+      </div>
+    </div>
+
+    <div class="actions-row">
+      <button id="submitBtn" class="btn btn-primary">Submit Assessment</button>
+      <button id="resetBtn" class="btn btn-ghost">Reset Lab</button>
+    </div>
+    <p class="hint-strip">Try <kbd>man ls</kbd> for help on a command · <kbd>↑</kbd>/<kbd>↓</kbd> recall previous commands · type <kbd>help</kbd> for the full list supported in this simulator.</p>
+  </div>
+
+</main>
+
+<footer class="site-footer">CNM · CIST 1680 Linux Essentials — practice simulator, runs entirely in your browser. No data leaves this page.</footer>
+
+<!-- ============ FEEDBACK MODAL ============ -->
+<div class="modal-overlay" id="modalOverlay" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitleText">
+    <div class="man-header">
+      <span>CIST1680(1)</span>
+      <span id="modalTitleText">CNM Linux Essentials Manual</span>
+      <span>CIST1680(1)</span>
+    </div>
+    <div class="modal-body" id="modalBody"><!-- populated by JS --></div>
+    <div class="man-footer">
+      <span>Formative Assessment 1</span>
+      <span id="modalFooterDate"></span>
+      <span>CIST1680(1)</span>
+    </div>
+    <div class="modal-close-row">
+      <button class="btn btn-ghost" id="closeModalBtn">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ===================== VIRTUAL FILESYSTEM ===================== */
+  function makeDir(owner, group, perms){
+    return { type:'dir', perms: perms || '755', owner: owner||'student', group: group||'student', children:{}, mtime:'Jul 27 09:00' };
+  }
+  function makeFile(content, owner, group, perms){
+    return { type:'file', perms: perms || '644', owner: owner||'student', group: group||'student', content: content||'', mtime:'Jul 27 09:00' };
+  }
+  function freshFS(){
+    var root = makeDir('root','root','755');
+    var home = makeDir('root','root','755');
+    var student = makeDir('student','student','755');
+    home.children['student'] = student;
+    root.children['home'] = home;
+    root.children['tmp'] = makeDir('root','root','1777');
+    return root;
+  }
+
+  var fs, cwd, history, dirStack, usedBangBang, inputHistory, inputHistoryPos;
+
+  function resetState(){
+    fs = freshFS();
+    cwd = ['home','student'];
+    history = [];
+    dirStack = [];
+    usedBangBang = false;
+    inputHistory = [];
+    inputHistoryPos = -1;
+  }
+  resetState();
+
+  function pathStr(segs){ return segs.length ? '/'+segs.join('/') : '/'; }
+  function displayPath(segs){
+    var p = pathStr(segs);
+    if(p === '/home/student') return '~';
+    if(p.indexOf('/home/student/') === 0) return '~' + p.slice('/home/student'.length);
+    return p;
+  }
+  function resolvePath(inputPath, cwdSegs){
+    var cur, parts;
+    if(inputPath.charAt(0) === '~'){
+      cur = ['home','student'];
+      var rest = inputPath.slice(1);
+      if(rest.charAt(0) === '/') rest = rest.slice(1);
+      parts = rest.split('/').filter(Boolean);
+    } else if(inputPath.charAt(0) === '/'){
+      cur = [];
+      parts = inputPath.split('/').filter(Boolean);
+    } else {
+      cur = cwdSegs.slice();
+      parts = inputPath.split('/').filter(Boolean);
+    }
+    for(var i=0;i<parts.length;i++){
+      var p = parts[i];
+      if(p === '.') continue;
+      else if(p === '..'){ if(cur.length) cur.pop(); }
+      else cur.push(p);
+    }
+    return cur;
+  }
+  function getNode(segs){
+    var node = fs;
+    for(var i=0;i<segs.length;i++){
+      if(!node || node.type !== 'dir') return null;
+      node = node.children[segs[i]];
+      if(!node) return null;
+    }
+    return node;
+  }
+
+  function octalToRwx(perm){
+    var str = String(perm);
+    var sticky = false;
+    if(str.length === 4){ sticky = str.charAt(0) === '1'; str = str.slice(1); }
+    var map = {'7':'rwx','6':'rw-','5':'r-x','4':'r--','3':'-wx','2':'-w-','1':'--x','0':'---'};
+    var result = str.split('').map(function(d){ return map[d] || '---'; }).join('');
+    if(sticky){ result = result.slice(0,-1) + (result.charAt(result.length-1)==='x' ? 't' : 'T'); }
+    return result;
+  }
+
+  /* ===================== OUTPUT HELPERS ===================== */
+  function out(text){ return { text: text, cls:'out' }; }
+  function err(text){ return { text: text, cls:'err' }; }
+  function muted(text){ return { text: text, cls:'muted' }; }
+
+  var termOutput = document.getElementById('termOutput');
+  var termInput = document.getElementById('termInput');
+  var promptLabel = document.getElementById('promptLabel');
+  var termTitleBar = document.getElementById('termTitleBar');
+
+  function escapeHTML(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function appendEchoLine(cmdText){
+    var div = document.createElement('div');
+    div.className = 'line echo';
+    div.innerHTML = '<span class="p-user">student@cnm-lab</span><span class="p-sym">:</span>' +
+      '<span class="p-path">' + escapeHTML(displayPath(cwd)) + '</span><span class="p-sym">$ </span>' +
+      escapeHTML(cmdText);
+    termOutput.appendChild(div);
+  }
+  function appendLine(item){
+    var div = document.createElement('div');
+    div.className = 'line ' + (item.cls || 'out');
+    div.textContent = item.text;
+    termOutput.appendChild(div);
+  }
+  function appendRaw(text, cls){
+    var div = document.createElement('div');
+    div.className = 'line ' + (cls||'out');
+    div.textContent = text;
+    termOutput.appendChild(div);
+  }
+  function scrollToBottom(){ termOutput.scrollTop = termOutput.scrollHeight; }
+  function refreshPrompt(){
+    promptLabel.innerHTML = '<span class="p-user">student@cnm-lab</span>:' + escapeHTML(displayPath(cwd)) + '$';
+    termTitleBar.textContent = 'student@cnm-lab: ' + displayPath(cwd) + ' — 80×24';
+  }
+
+  /* ===================== COMMANDS ===================== */
+  function cmdPwd(){ return [out(pathStr(cwd))]; }
+
+  function cmdCd(args){
+    var target = args[0];
+    var segs = target ? resolvePath(target, cwd) : ['home','student'];
+    var node = getNode(segs);
+    if(!node) return [err("bash: cd: " + target + ": No such file or directory")];
+    if(node.type !== 'dir') return [err("bash: cd: " + target + ": Not a directory")];
+    cwd = segs;
+    return [];
+  }
+
+  function fileSize(node){ return node.type === 'dir' ? 4096 : (node.content ? node.content.length : 0); }
+  function padNum(n, width){ var s = String(n); while(s.length < width) s = ' ' + s; return s; }
+
+  function formatLsLine(name, node){
+    var t = node.type === 'dir' ? 'd' : '-';
+    return t + octalToRwx(node.perms) + ' 1 ' + node.owner + ' ' + node.group + ' ' +
+      padNum(fileSize(node), 5) + ' ' + node.mtime + ' ' + name + (node.type==='dir' && name!=='.' && name!=='..' ? '/' : '');
+  }
+
+  function cmdLs(args){
+    var showAll = false, longFmt = false, paths = [];
+    args.forEach(function(a){
+      if(a.charAt(0) === '-'){
+        if(a.indexOf('a') !== -1) showAll = true;
+        if(a.indexOf('l') !== -1) longFmt = true;
+      } else paths.push(a);
+    });
+    var targetSegs = paths.length ? resolvePath(paths[0], cwd) : cwd;
+    var node = getNode(targetSegs);
+    if(!node) return [err("ls: cannot access '" + paths[0] + "': No such file or directory")];
+    if(node.type === 'file') return [out((paths[0]||''))];
+
+    var entries = Object.keys(node.children).sort().map(function(k){ return [k, node.children[k]]; });
+    if(!longFmt){
+      var names = entries.map(function(e){ return e[0] + (e[1].type==='dir' ? '/' : ''); });
+      if(showAll) names = ['.','..'].concat(names);
+      if(!names.length) return [];
+      return [out(names.join('  '))];
+    }
+    var lines = [];
+    lines.push(out('total ' + (entries.length * 4 + 8)));
+    if(showAll){
+      lines.push(out(formatLsLine('.', node)));
+      lines.push(out(formatLsLine('..', node)));
+    }
+    entries.forEach(function(e){ lines.push(out(formatLsLine(e[0], e[1]))); });
+    return lines;
+  }
+
+  function cmdMkdir(args){
+    var pFlag = false, paths = [];
+    args.forEach(function(a){ a === '-p' ? pFlag = true : paths.push(a); });
+    if(!paths.length) return [err('mkdir: missing operand')];
+    var lines = [];
+    paths.forEach(function(p){
+      var segs = resolvePath(p, cwd);
+      if(pFlag){
+        var node = fs;
+        for(var i=0;i<segs.length;i++){
+          var s = segs[i];
+          if(!node.children[s]) node.children[s] = makeDir();
+          if(node.children[s].type !== 'dir'){
+            lines.push(err("mkdir: cannot create directory '" + p + "': Not a directory"));
+            return;
+          }
+          node = node.children[s];
+        }
+      } else {
+        var parentSegs = segs.slice(0,-1);
+        var parent = getNode(parentSegs);
+        var name = segs[segs.length-1];
+        if(!parent || parent.type !== 'dir'){ lines.push(err("mkdir: cannot create directory '" + p + "': No such file or directory")); return; }
+        if(parent.children[name]){ lines.push(err("mkdir: cannot create directory '" + p + "': File exists")); return; }
+        parent.children[name] = makeDir();
+      }
+    });
+    return lines;
+  }
+
+  function cmdTouch(args){
+    if(!args.length) return [err('touch: missing file operand')];
+    var lines = [];
+    args.forEach(function(p){
+      var segs = resolvePath(p, cwd);
+      var parent = getNode(segs.slice(0,-1));
+      var name = segs[segs.length-1];
+      if(!parent || parent.type !== 'dir'){ lines.push(err("touch: cannot touch '" + p + "': No such file or directory")); return; }
+      if(parent.children[name]){ parent.children[name].mtime = 'Jul 27 09:05'; }
+      else parent.children[name] = makeFile('');
+    });
+    return lines;
+  }
+
+  function cmdCat(args){
+    if(!args.length) return [err('cat: missing file operand')];
+    var lines = [];
+    args.forEach(function(p){
+      var segs = resolvePath(p, cwd);
+      var node = getNode(segs);
+      if(!node){ lines.push(err('cat: ' + p + ': No such file or directory')); return; }
+      if(node.type === 'dir'){ lines.push(err('cat: ' + p + ': Is a directory')); return; }
+      if(node.content) node.content.split('\n').forEach(function(l){ lines.push(out(l)); });
+    });
+    return lines;
+  }
+
+  function cmdChmod(args){
+    if(args.length < 2) return [err('chmod: missing operand')];
+    var mode = args[0], target = args[1];
+    if(!/^[0-7]{3,4}$/.test(mode)) return [err("chmod: invalid mode: '" + mode + "'")];
+    var segs = resolvePath(target, cwd);
+    var node = getNode(segs);
+    if(!node) return [err("chmod: cannot access '" + target + "': No such file or directory")];
+    node.perms = mode;
+    return [];
+  }
+
+  function cmdChown(args){
+    if(args.length < 2) return [err('chown: missing operand')];
+    var spec = args[0].split(':'), target = args[1];
+    var segs = resolvePath(target, cwd);
+    var node = getNode(segs);
+    if(!node) return [err("chown: cannot access '" + target + "': No such file or directory")];
+    if(spec[0]) node.owner = spec[0];
+    if(spec[1]) node.group = spec[1];
+    return [];
+  }
+
+  function cmdStat(args){
+    var target = args[0];
+    if(!target) return [err('stat: missing operand')];
+    var segs = resolvePath(target, cwd);
+    var node = getNode(segs);
+    if(!node) return [err("stat: cannot statx '" + target + "': No such file or directory")];
+    var name = segs[segs.length-1] || '/';
+    var size = fileSize(node);
+    var typeDesc = node.type === 'dir' ? 'directory' : 'regular file';
+    var permStr = (node.type === 'dir' ? 'd' : '-') + octalToRwx(node.perms);
+    return [
+      out('  File: ' + name),
+      out('  Size: ' + size + '          Blocks: ' + (Math.ceil(size/512)||1) + '     IO Block: 4096   ' + typeDesc),
+      out('Device: 259,2   Inode: 1048577    Links: 1'),
+      out('Access: (0' + node.perms + '/' + permStr + ')  Uid: ( 1000/ ' + node.owner + ')   Gid: ( 1000/ ' + node.group + ')'),
+      out('Access: 2026-07-27 09:00:00.000000000 -0600'),
+      out('Modify: 2026-07-27 09:00:00.000000000 -0600')
+    ];
+  }
+
+  function cmdTree(args){
+    var depth = Infinity, target = null;
+    for(var i=0;i<args.length;i++){
+      if(args[i] === '-L'){ depth = parseInt(args[i+1],10) || Infinity; i++; }
+      else if(args[i].charAt(0) !== '-') target = args[i];
+    }
+    var segs = target ? resolvePath(target, cwd) : cwd;
+    var node = getNode(segs);
+    if(!node) return [err((target||'') + ': No such file or directory')];
+    if(node.type !== 'dir') return [err((target||'') + ': not a directory')];
+    var lines = [out(displayPath(segs))];
+    var counts = { dirs:0, files:0 };
+    (function recurse(n, prefix, level){
+      if(level > depth) return;
+      var entries = Object.keys(n.children).sort().map(function(k){ return [k, n.children[k]]; });
+      entries.forEach(function(entry, idx){
+        var name = entry[0], child = entry[1];
+        var isLast = idx === entries.length - 1;
+        lines.push(out(prefix + (isLast ? '└── ' : '├── ') + name + (child.type === 'dir' ? '/' : '')));
+        if(child.type === 'dir') counts.dirs++; else counts.files++;
+        if(child.type === 'dir' && level < depth) recurse(child, prefix + (isLast ? '    ' : '│   '), level + 1);
+      });
+    })(node, '', 1);
+    lines.push(out(''));
+    lines.push(out(counts.dirs + ' directories, ' + counts.files + ' files'));
+    return lines;
+  }
+
+  function cmdPushd(args){
+    var target = args[0];
+    if(!target) return [err('pushd: no other directory')];
+    var segs = resolvePath(target, cwd);
+    var node = getNode(segs);
+    if(!node || node.type !== 'dir') return [err('pushd: ' + target + ': No such file or directory')];
+    dirStack.unshift(pathStr(cwd));
+    cwd = segs;
+    return [out([displayPath(cwd)].concat(dirStack.map(function(p){ return displayPath(p.split('/').filter(Boolean)); })).join(' '))];
+  }
+  function cmdPopd(){
+    if(!dirStack.length) return [err('popd: directory stack empty')];
+    var prev = dirStack.shift();
+    cwd = prev === '/' ? [] : prev.split('/').filter(Boolean);
+    return [out([displayPath(cwd)].concat(dirStack.map(function(p){ return displayPath(p.split('/').filter(Boolean)); })).join(' '))];
+  }
+
+  function cmdGrep(args){
+    var lineNums = false, rest = [];
+    args.forEach(function(a){ a === '-n' ? lineNums = true : rest.push(a); });
+    if(rest.length < 2) return [err('Usage: grep [-n] PATTERN FILE')];
+    var pattern = rest[0], fileArg = rest[1];
+    var segs = resolvePath(fileArg, cwd);
+    var node = getNode(segs);
+    if(!node) return [err('grep: ' + fileArg + ': No such file or directory')];
+    if(node.type === 'dir') return [err('grep: ' + fileArg + ': Is a directory')];
+    var re;
+    try{ re = new RegExp(pattern); } catch(e){ re = new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')); }
+    var lines = (node.content||'').split('\n');
+    var results = [];
+    lines.forEach(function(l, idx){ if(re.test(l)) results.push(out((lineNums ? (idx+1)+':' : '') + l)); });
+    return results;
+  }
+
+  var MAN_PAGES = {
+    ls:{name:'ls — list directory contents', syn:'ls [-a] [-l] [FILE]', desc:'-a shows hidden entries (. and ..); -l uses a long listing with permissions, owner, group, size, and modified time.'},
+    cd:{name:'cd — change the working directory', syn:'cd [DIR]', desc:'Changes the shell working directory to DIR. With no argument, changes to the home directory (~).'},
+    pwd:{name:'pwd — print working directory', syn:'pwd', desc:'Prints the full absolute path of the current working directory.'},
+    mkdir:{name:'mkdir — make directories', syn:'mkdir [-p] DIR...', desc:'-p creates parent directories as needed and does not error if a directory already exists.'},
+    touch:{name:'touch — create or update a file', syn:'touch FILE...', desc:'Creates an empty file if it does not exist, or updates its modified time if it does.'},
+    chmod:{name:'chmod — change file permissions', syn:'chmod MODE FILE', desc:'Sets permissions using an octal MODE such as 755 (owner rwx, group r-x, other r-x).'},
+    chown:{name:'chown — change file owner and group', syn:'chown OWNER[:GROUP] FILE', desc:'Changes the user and, optionally, group ownership of FILE.'},
+    stat:{name:'stat — display file status', syn:'stat FILE', desc:'Shows detailed metadata: size, permissions, owner/group, and timestamps.'},
+    tree:{name:'tree — list contents as a tree', syn:'tree [-L level] [DIR]', desc:'-L limits how many directory levels deep the tree is printed.'},
+    pushd:{name:'pushd — push directory onto the stack', syn:'pushd DIR', desc:'Saves the current directory on the directory stack and changes to DIR.'},
+    popd:{name:'popd — pop directory off the stack', syn:'popd', desc:'Removes the top directory from the stack and changes back to it.'},
+    history:{name:'history — command history', syn:'history | tail -N', desc:'Lists previously entered commands, numbered in order. Pipe to tail -N to see only the last N.'},
+    whoami:{name:'whoami — print effective username', syn:'whoami', desc:'Prints the username associated with the current effective user ID.'},
+    id:{name:'id — print user and group identity', syn:'id', desc:'Prints the UID, GID, and group memberships of the current user.'},
+    hostname:{name:'hostname — show system hostname', syn:'hostname', desc:'Prints the name of the current host system.'},
+    uname:{name:'uname — print system information', syn:'uname -a', desc:'-a prints all available kernel and system information in one line.'},
+    uptime:{name:'uptime — tell how long the system has run', syn:'uptime', desc:'Shows current time, how long the system has been running, and load averages.'},
+    grep:{name:'grep — search text using patterns', syn:'grep [-n] PATTERN FILE', desc:'-n prefixes each matching line with its line number.'},
+    cat:{name:'cat — concatenate and print files', syn:'cat FILE...', desc:'Prints the contents of FILE(s) to the terminal.'}
+  };
+  function cmdMan(args){
+    var target = args[0];
+    if(!target) return [err('What manual page do you want?')];
+    var page = MAN_PAGES[target];
+    if(!page) return [err('No manual entry for ' + target)];
+    var bar = target.toUpperCase() + '(1)';
+    var pad = '                    ';
+    return [
+      out(bar + pad + 'User Commands' + pad + bar),
+      out(''), out('NAME'), out('       ' + page.name),
+      out(''), out('SYNOPSIS'), out('       ' + page.syn),
+      out(''), out('DESCRIPTION'), out('       ' + page.desc),
+      out('')
+    ];
+  }
+
+  function cmdRm(args){
+    var recursive = false, paths = [];
+    args.forEach(function(a){ (a === '-r' || a === '-rf' || a === '-fr') ? recursive = true : paths.push(a); });
+    if(!paths.length) return [err('rm: missing operand')];
+    var lines = [];
+    paths.forEach(function(p){
+      var segs = resolvePath(p, cwd);
+      var parent = getNode(segs.slice(0,-1));
+      var name = segs[segs.length-1];
+      if(!parent || !parent.children[name]){ lines.push(err("rm: cannot remove '" + p + "': No such file or directory")); return; }
+      if(parent.children[name].type === 'dir' && !recursive && Object.keys(parent.children[name].children).length){
+        lines.push(err("rm: cannot remove '" + p + "': Is a directory")); return;
+      }
+      delete parent.children[name];
+    });
+    return lines;
+  }
+
+  function cmdHistory(args){
+    var list = history.slice(0, -1); // exclude the current 'history' call
+    var tailN = null;
+    var pipeIdx = args.indexOf('|');
+    if(pipeIdx !== -1 && args[pipeIdx+1] === 'tail'){
+      var nArg = args[pipeIdx+2];
+      tailN = (nArg && nArg.charAt(0) === '-') ? parseInt(nArg.slice(1),10) : 10;
+    }
+    var display = list, startNum = 1;
+    if(tailN){ display = list.slice(-tailN); startNum = list.length - display.length + 1; }
+    if(!display.length) return [muted('(no commands yet)')];
+    return display.map(function(c, i){ return out('  ' + (startNum + i) + '  ' + c); });
+  }
+
+  /* ===================== DISPATCH ===================== */
+  function runCommand(cmdStr){
+    history.push(cmdStr);
+    var parts = cmdStr.split(/\s+/).filter(Boolean);
+    var cmd = parts[0];
+    var args = parts.slice(1);
+    switch(cmd){
+      case 'pwd': return cmdPwd();
+      case 'cd': return cmdCd(args);
+      case 'ls': return cmdLs(args);
+      case 'mkdir': return cmdMkdir(args);
+      case 'touch': return cmdTouch(args);
+      case 'cat': return cmdCat(args);
+      case 'chmod': return cmdChmod(args);
+      case 'chown': return cmdChown(args);
+      case 'stat': return cmdStat(args);
+      case 'tree': return cmdTree(args);
+      case 'pushd': return cmdPushd(args);
+      case 'popd': return cmdPopd();
+      case 'grep': return cmdGrep(args);
+      case 'man': return cmdMan(args);
+      case 'rm': return cmdRm(args);
+      case 'rmdir': return cmdRm(args.concat(['-r']));
+      case 'history': return cmdHistory(args);
+      case 'whoami': return [out('student')];
+      case 'id': return [out('uid=1000(student) gid=1000(student) groups=1000(student),27(sudo)')];
+      case 'hostname': return [out('cnm-lab')];
+      case 'uname':
+        if(args.indexOf('-a') !== -1) return [out('Linux cnm-lab 6.8.0-45-generic #45-Ubuntu SMP x86_64 GNU/Linux')];
+        return [out('Linux')];
+      case 'uptime': return [out(' 10:42:07 up 2:14,  1 user,  load average: 0.15, 0.10, 0.05')];
+      case 'date': return [out('Mon Jul 27 09:00:00 MDT 2026')];
+      case 'echo': return [out(args.join(' '))];
+      case 'clear': termOutput.innerHTML=''; return [];
+      case 'help': return [
+        out('Supported commands:'),
+        out('  whoami  id  hostname  uname -a  uptime'),
+        out('  pwd  cd  ls  mkdir  touch  cat  rm  rmdir'),
+        out('  chmod  chown  stat  tree  pushd  popd'),
+        out('  grep  man  history  echo  clear  date')
+      ];
+      default: return [err('bash: ' + cmd + ': command not found')];
+    }
+  }
+
+  function handleInput(raw){
+    raw = raw.trim();
+    appendEchoLine(raw);
+    if(raw === ''){ scrollToBottom(); return; }
+    if(raw !== '!!'){ inputHistory.push(raw); }
+    inputHistoryPos = -1;
+
+    if(raw === '!!'){
+      usedBangBang = true;
+      if(!history.length){ appendRaw('!!: event not found', 'err'); scrollToBottom(); refreshPrompt(); return; }
+      var last = history[history.length - 1];
+      appendRaw(last, 'muted');
+      var lines = runCommand(last);
+      lines.forEach(appendLine);
+    } else {
+      var out2 = runCommand(raw);
+      out2.forEach(appendLine);
+    }
+    refreshPrompt();
+    scrollToBottom();
+  }
+
+  termInput.addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){
+      var val = termInput.value;
+      termInput.value = '';
+      handleInput(val);
+    } else if(e.key === 'ArrowUp'){
+      if(inputHistory.length){
+        if(inputHistoryPos === -1) inputHistoryPos = inputHistory.length - 1;
+        else if(inputHistoryPos > 0) inputHistoryPos--;
+        termInput.value = inputHistory[inputHistoryPos] || '';
+        setTimeout(function(){ termInput.setSelectionRange(termInput.value.length, termInput.value.length); }, 0);
+      }
+      e.preventDefault();
+    } else if(e.key === 'ArrowDown'){
+      if(inputHistoryPos !== -1){
+        inputHistoryPos++;
+        if(inputHistoryPos >= inputHistory.length){ inputHistoryPos = -1; termInput.value = ''; }
+        else termInput.value = inputHistory[inputHistoryPos];
+      }
+      e.preventDefault();
+    }
+  });
+
+  function welcomeMessage(){
+    termOutput.innerHTML = '';
+    [
+      muted('CNM Linux Essentials — practice terminal (simulated, sandboxed).'),
+      muted('Type a command and press Enter. Try "help" for the supported command list.'),
+      out('')
+    ].forEach(appendLine);
+    refreshPrompt();
+  }
+  welcomeMessage();
+  termInput.focus();
+
+  /* ===================== GRADING ENGINE ===================== */
+  var SYSOP = ['home','student','sysop-lab'];
+  var DOCS = SYSOP.concat('docs');
+  var SCRIPTS = SYSOP.concat('scripts');
+  var NOTES = DOCS.concat('notes.txt');
+  var TESTSH = SCRIPTS.concat('test.sh');
+
+  function historyHas(re){ return history.some(function(c){ return re.test(c.trim()); }); }
+
+  function buildChecks(){
+    var testNode = getNode(TESTSH);
+    return [
+      { part:'Part A', weight:5, label:'Checked your identity with whoami', hint:'Type: whoami', pass: historyHas(/^whoami\s*$/) },
+      { part:'Part A', weight:5, label:'Checked UID/groups with id', hint:'Type: id', pass: historyHas(/^id\s*$/) },
+      { part:'Part A', weight:5, label:'Checked the system name with hostname', hint:'Type: hostname', pass: historyHas(/^hostname\s*$/) },
+      { part:'Part A', weight:5, label:'Checked kernel info with uname -a', hint:'Type: uname -a (the -a flag matters)', pass: historyHas(/^uname\s+-a\s*$/) },
+      { part:'Part A', weight:5, label:'Checked system uptime', hint:'Type: uptime', pass: historyHas(/^uptime\s*$/) },
+      { part:'Part A', weight:5, label:'Reviewed command history', hint:'Type: history (piping to tail -10 is even better)', pass: historyHas(/^history\b/) },
+      { part:'Part A', weight:5, label:'Practiced the !! shortcut', hint:'Type !! to re-run your last command', pass: usedBangBang },
+      { part:'Part B', weight:10, label:'Built the sysop-lab/docs and sysop-lab/scripts directories', hint:'Use: mkdir -p ~/sysop-lab/docs ~/sysop-lab/scripts', pass: !!(getNode(DOCS) && getNode(DOCS).type==='dir' && getNode(SCRIPTS) && getNode(SCRIPTS).type==='dir') },
+      { part:'Part B', weight:5, label:'Navigated into ~/sysop-lab with cd', hint:'Use: cd ~/sysop-lab', pass: historyHas(/^cd\s+(~\/sysop-lab|sysop-lab)\/?\s*$/) },
+      { part:'Part B', weight:10, label:'Created notes.txt and test.sh with touch', hint:'Use: touch docs/notes.txt scripts/test.sh', pass: !!(getNode(NOTES) && getNode(NOTES).type==='file' && testNode && testNode.type==='file') },
+      { part:'Part B', weight:5, label:'Listed the structure with ls -la', hint:'Use: ls -la', pass: historyHas(/^ls\s+-la\b/) },
+      { part:'Part B', weight:5, label:'Visualized the structure with tree', hint:'Use: tree -L 2 ~/sysop-lab', pass: historyHas(/^tree\b/) },
+      { part:'Part B', weight:5, label:'Practiced the directory stack with pushd/popd', hint:'Use: pushd /tmp then popd', pass: historyHas(/^pushd\b/) && historyHas(/^popd\b/) },
+      { part:'Part C', weight:5, label:'Checked permissions with ls -l before changing them', hint:'Use: ls -l ~/sysop-lab/scripts/test.sh', pass: historyHas(/^ls\s+-l\s+.*test\.sh/) },
+      { part:'Part C', weight:15, label:'Changed test.sh to mode 755 with chmod', hint:'Use: chmod 755 ~/sysop-lab/scripts/test.sh', pass: !!(testNode && String(testNode.perms) === '755') && historyHas(/^chmod\s+755\b/) },
+      { part:'Part C', weight:5, label:'Verified the change with stat', hint:'Use: stat ~/sysop-lab/scripts/test.sh', pass: historyHas(/^stat\b.*test\.sh/) }
+    ];
+  }
+
+  function statusFor(score){
+    if(score >= 90) return { label:'🏆 Mastered', color:'var(--green)' };
+    if(score >= 70) return { label:'✅ Proficient', color:'var(--sky)' };
+    if(score >= 50) return { label:'⚠️ Needs Practice', color:'var(--amber)' };
+    return { label:'🔁 Needs Revision', color:'var(--red)' };
+  }
+
+  var modalOverlay = document.getElementById('modalOverlay');
+  var modalBody = document.getElementById('modalBody');
+  var modalFooterDate = document.getElementById('modalFooterDate');
+
+  function showReport(){
+    var checks = buildChecks();
+    var score = checks.reduce(function(sum, c){ return sum + (c.pass ? c.weight : 0); }, 0);
+    var status = statusFor(score);
+    var good = checks.filter(function(c){ return c.pass; });
+    var bad = checks.filter(function(c){ return !c.pass; });
+
+    var partsOrder = ['Part A','Part B','Part C'];
+    function groupLabel(part){
+      if(part==='Part A') return 'Part A — Identity, History & System Info';
+      if(part==='Part B') return 'Part B — Filesystem Navigation';
+      return 'Part C — Permissions Basics';
+    }
+
+    var html = '';
+    html += '<div class="score-block">';
+    html += '<span class="score-num">' + score + '%</span>';
+    html += '<span class="score-status" style="color:' + status.color + '">' + status.label + '</span>';
+    html += '<span class="score-sub">' + good.length + ' of ' + checks.length + ' rubric items met · based on your command history and current filesystem state</span>';
+    html += '</div>';
+
+    html += '<h3>🟢 What you did well</h3>';
+    if(good.length){
+      html += '<ul class="report-list good">';
+      partsOrder.forEach(function(part){
+        good.filter(function(c){ return c.part===part; }).forEach(function(c){
+          html += '<li><span class="icon">✔</span><span>' + c.label + '</span></li>';
+        });
+      });
+      html += '</ul>';
+    } else {
+      html += '<p style="font-size:12.5px;color:var(--text-faint)">Nothing passed yet — run some commands in the terminal and submit again.</p>';
+    }
+
+    html += '<h3>🟡 Areas to improve</h3>';
+    if(bad.length){
+      html += '<ul class="report-list improve">';
+      partsOrder.forEach(function(part){
+        bad.filter(function(c){ return c.part===part; }).forEach(function(c){
+          html += '<li><span class="icon">•</span><span><strong>' + groupLabel(part) + ':</strong> ' + c.label + '. <em style="color:var(--text-faint)">' + c.hint + '</em></span></li>';
+        });
+      });
+      html += '</ul>';
+    } else {
+      html += '<p style="font-size:12.5px;color:var(--text-faint)">Everything in the rubric checks out. Great work!</p>';
+    }
+
+    html += '<h3>🏁 Status</h3>';
+    html += '<p style="font-size:12.5px;color:var(--text-dim)">Remember this simulator only checks commands and the filesystem — you still need to fill out the written verification boxes and the Task 6 explanation on your official worksheet before submitting for credit.</p>';
+
+    modalBody.innerHTML = html;
+    modalFooterDate.textContent = 'Jul 27 2026';
+    modalOverlay.hidden = false;
+    document.getElementById('closeModalBtn').focus();
+  }
+
+  document.getElementById('submitBtn').addEventListener('click', showReport);
+  document.getElementById('closeModalBtn').addEventListener('click', function(){
+    modalOverlay.hidden = true;
+    termInput.focus();
+  });
+  modalOverlay.addEventListener('click', function(e){
+    if(e.target === modalOverlay){ modalOverlay.hidden = true; termInput.focus(); }
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && !modalOverlay.hidden){ modalOverlay.hidden = true; termInput.focus(); }
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', function(){
+    resetState();
+    welcomeMessage();
+    termInput.focus();
+  });
+
+  document.querySelector('.term-wrap').addEventListener('click', function(){ termInput.focus(); });
+
+})();
+</script>
+</body>
+</html>
