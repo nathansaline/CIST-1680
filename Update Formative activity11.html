@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CIST 1680 | Networking FA2 – Name Resolution</title>
+  <style>
+    :root {
+      --cnm-gold: #F6BE00; --cnm-sky: #41B6E6; --bg-deep: #0b1320; --bg-card: #131e30;
+      --bg-terminal: #0a1018; --text-main: #e8eef7; --text-muted: #8b9bb4; --border: #1e2d45;
+      --success: #3dd68c; --warn: #f6be00; --error: #ff6b6b; --prompt: #41B6E6; --focus-ring: #F6BE00;
+    }
+    [data-theme="light"] {
+      --bg-deep: #f0f4f8; --bg-card: #fff; --bg-terminal: #1e293b; --text-main: #0f172a;
+      --text-muted: #475569; --border: #cbd5e1; --prompt: #0284c7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-deep); color: var(--text-main); min-height: 100vh; line-height: 1.5; }
+    a.skip-link { position: absolute; left: -9999px; top: 0; background: var(--cnm-gold); color: #0b1320; padding: .5rem 1rem; z-index: 9999; font-weight: 700; }
+    a.skip-link:focus { left: .5rem; top: .5rem; }
+    .site-header { background: linear-gradient(135deg,#0d1a2d,#131e30); border-bottom: 2px solid var(--cnm-gold); padding: 1rem 1.5rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; }
+    [data-theme="light"] .site-header { background: linear-gradient(135deg,#e2e8f0,#f8fafc); }
+    .brand { display: flex; align-items: center; gap: .75rem; }
+    .brand-badge { background: var(--cnm-gold); color: #0b1320; font-weight: 800; font-size: .75rem; padding: .25rem .5rem; border-radius: 4px; }
+    .brand h1 { font-size: 1.05rem; font-weight: 600; } .brand h1 span { color: var(--cnm-sky); }
+    .header-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+    button { font-family: inherit; cursor: pointer; border: none; border-radius: 6px; font-weight: 600; font-size: .875rem; padding: .55rem 1rem; }
+    button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+    .btn-gold { background: var(--cnm-gold); color: #0b1320; }
+    .btn-sky { background: var(--cnm-sky); color: #0b1320; }
+    .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--cnm-sky); color: var(--cnm-sky); }
+    .layout { display: grid; grid-template-columns: 1fr 1.1fr; gap: 1.25rem; padding: 1.25rem; max-width: 1400px; margin: 0 auto; }
+    @media (max-width: 960px) { .layout { grid-template-columns: 1fr; } }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .card-header { background: rgba(0,0,0,.2); padding: .75rem 1rem; border-bottom: 1px solid var(--border); }
+    [data-theme="light"] .card-header { background: #f1f5f9; }
+    .card-header h2 { font-size: .95rem; font-weight: 600; color: var(--cnm-gold); }
+    .card-body { padding: 1rem; }
+    .instructions { max-height: calc(100vh - 150px); overflow-y: auto; }
+    .task-block { margin-bottom: 1.15rem; padding-bottom: .95rem; border-bottom: 1px dashed var(--border); }
+    .task-block:last-child { border-bottom: none; }
+    .task-block h3 { font-size: .9rem; color: var(--cnm-sky); margin-bottom: .35rem; }
+    .task-block p { font-size: .85rem; color: var(--text-muted); margin-bottom: .3rem; }
+    .cmd-list { background: var(--bg-terminal); border-radius: 6px; padding: .55rem .75rem; margin: .45rem 0; font-family: Consolas, monospace; font-size: .8rem; color: #b8e0c8; line-height: 1.5; }
+    .badge { display: inline-block; font-size: .7rem; padding: .12rem .4rem; border-radius: 4px; font-weight: 700; }
+    .badge-a { background: #1a3a5c; color: var(--cnm-sky); }
+    .badge-b { background: #1a3a2c; color: #3dd68c; }
+    .badge-c { background: #3a2a1a; color: var(--cnm-gold); }
+    .answer-field { margin-top: .5rem; }
+    .answer-field label { display: block; font-size: .75rem; color: var(--cnm-gold); margin-bottom: .25rem; font-weight: 600; }
+    .answer-field textarea {
+      width: 100%; background: var(--bg-terminal); border: 1px solid var(--border); border-radius: 6px;
+      color: #e8eef7; font-family: Consolas, monospace; font-size: .78rem; padding: .5rem .6rem; resize: vertical; min-height: 52px; line-height: 1.4;
+    }
+    .terminal-wrap { display: flex; flex-direction: column; height: calc(100vh - 150px); min-height: 460px; }
+    .term-chrome { background: #1a2438; padding: .5rem .85rem; display: flex; align-items: center; gap: .45rem; border-bottom: 1px solid var(--border); }
+    .dot { width: 11px; height: 11px; border-radius: 50%; } .dot-red { background: #ff5f56; } .dot-yellow { background: #ffbd2e; } .dot-green { background: #27c93f; }
+    .term-title { margin-left: .5rem; font-size: .75rem; color: var(--text-muted); font-family: monospace; }
+    .term-body { flex: 1; background: var(--bg-terminal); display: flex; flex-direction: column; overflow: hidden; }
+    #term-output { flex: 1; overflow-y: auto; padding: .8rem 1rem; font-family: Consolas, monospace; font-size: .82rem; line-height: 1.45; white-space: pre-wrap; word-break: break-word; color: #c8d6e5; }
+    .term-prompt { color: var(--prompt); } .term-cmd { color: #e8eef7; } .term-err { color: var(--error); } .term-info { color: var(--cnm-gold); }
+    .term-input-row { display: flex; align-items: center; padding: .5rem 1rem .65rem; border-top: 1px solid var(--border); background: #0c1420; gap: .3rem; }
+    .prompt-label { font-family: monospace; font-size: .82rem; color: var(--prompt); white-space: nowrap; }
+    #cmd-input { flex: 1; background: transparent; border: none; outline: none; color: #e8eef7; font-family: Consolas, monospace; font-size: .82rem; caret-color: var(--cnm-gold); }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(5,10,20,.85); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; max-width: 640px; width: 100%; max-height: 90vh; overflow-y: auto; }
+    .modal-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .modal-header h2 { font-size: 1.1rem; color: var(--cnm-gold); }
+    .modal-close { background: transparent; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer; }
+    .modal-body { padding: 1.25rem; }
+    .score-banner { text-align: center; padding: 1rem; border-radius: 8px; margin-bottom: 1.1rem; font-weight: 700; font-size: 1.1rem; }
+    .score-mastered { background: rgba(61,214,140,.15); color: var(--success); border: 1px solid var(--success); }
+    .score-partial { background: rgba(246,190,0,.12); color: var(--warn); border: 1px solid var(--warn); }
+    .score-needs { background: rgba(255,107,107,.12); color: var(--error); border: 1px solid var(--error); }
+    .fb-section { margin-bottom: 1rem; } .fb-section h3 { font-size: .9rem; margin-bottom: .4rem; }
+    .fb-section ul { list-style: none; } .fb-section li { font-size: .85rem; color: var(--text-muted); padding: .25rem 0 .25rem 1.1rem; position: relative; }
+    .fb-section li::before { content: '•'; position: absolute; left: .25rem; color: var(--cnm-sky); }
+    .progress-bar-wrap { height: 8px; background: #1a2438; border-radius: 4px; overflow: hidden; margin-top: .45rem; }
+    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--cnm-sky), var(--cnm-gold)); border-radius: 4px; transition: width .4s; }
+    .footer-note { text-align: center; padding: .7rem; font-size: .75rem; color: var(--text-muted); border-top: 1px solid var(--border); }
+    .tip { font-size: .78rem; color: var(--text-muted); margin-top: .55rem; padding: .5rem .65rem; background: rgba(65,182,230,.08); border-left: 3px solid var(--cnm-sky); border-radius: 0 4px 4px 0; }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <header class="site-header" role="banner">
+    <div class="brand"><span class="brand-badge">CNM</span><h1>CIST 1680 · <span>Net FA2 Name Resolution</span></h1></div>
+    <div class="header-actions">
+      <button type="button" class="btn-ghost" id="btn-theme" aria-label="Toggle theme">Theme</button>
+      <button type="button" class="btn-ghost" id="btn-reset" aria-label="Reset lab">Reset Lab</button>
+      <button type="button" class="btn-sky" id="btn-help" aria-label="Help">Help</button>
+      <button type="button" class="btn-gold" id="btn-submit" aria-label="Submit">Submit Assessment</button>
+    </div>
+  </header>
+  <main id="main-content" class="layout">
+    <aside class="card instructions" aria-label="Lab instructions">
+      <div class="card-header"><h2>📋 Lab Objectives</h2></div>
+      <div class="card-body">
+        <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:1rem;"><strong style="color:var(--cnm-gold)">MLO-3 / MLO-5</strong> — Configure local static hostname resolution, resolver endpoints, and lookup order.</p>
+
+        <div class="task-block">
+          <span class="badge badge-a">Part A</span>
+          <h3>Task 1 – Examine Config Files</h3>
+          <div class="cmd-list">cat /etc/hosts<br>cat /etc/resolv.conf<br>grep hosts /etc/nsswitch.conf</div>
+          <div class="answer-field">
+            <label for="ans-t1">✓ Verification — Static hosts entries (besides localhost), nameserver IP(s), hosts: line from nsswitch:</label>
+            <textarea id="ans-t1" rows="3" placeholder="hosts: (only localhost)&#10;nameserver: 8.8.8.8&#10;hosts: files dns" aria-required="true"></textarea>
+          </div>
+        </div>
+
+        <div class="task-block">
+          <span class="badge badge-a">Part A</span>
+          <h3>Task 2 – nsswitch Order Meaning</h3>
+          <p>What does the order of the <code style="color:var(--cnm-gold)">hosts:</code> line in nsswitch.conf tell the system to do? (1–2 sentences)</p>
+          <div class="answer-field">
+            <label for="ans-t2">Your explanation:</label>
+            <textarea id="ans-t2" rows="3" placeholder="hosts: files dns means check /etc/hosts first, then DNS…" aria-required="true"></textarea>
+          </div>
+        </div>
+
+        <div class="task-block">
+          <span class="badge badge-b">Part B</span>
+          <h3>Task 3 – Add Static Entry</h3>
+          <div class="cmd-list">sudo cp /etc/hosts /etc/hosts.bak<br>echo '10.10.10.50   labserver.cis' | sudo tee -a /etc/hosts<br>cat /etc/hosts</div>
+          <div class="answer-field">
+            <label for="ans-t3">✓ Verification — Exact new line at bottom of /etc/hosts:</label>
+            <textarea id="ans-t3" rows="2" placeholder="10.10.10.50   labserver.cis" aria-required="true"></textarea>
+          </div>
+        </div>
+
+        <div class="task-block">
+          <span class="badge badge-b">Part B</span>
+          <h3>Task 4 – Test Resolution</h3>
+          <div class="cmd-list">getent hosts labserver.cis<br>ping -c 2 labserver.cis</div>
+          <div class="answer-field">
+            <label for="ans-t4">✓ Verification — IP returned by getent for labserver.cis:</label>
+            <textarea id="ans-t4" rows="2" placeholder="10.10.10.50" aria-required="true"></textarea>
+          </div>
+        </div>
+
+        <div class="task-block">
+          <span class="badge badge-b">Part B</span>
+          <h3>Task 5 – Restore Backup</h3>
+          <div class="cmd-list">sudo cp /etc/hosts.bak /etc/hosts<br>getent hosts labserver.cis || echo 'Entry successfully removed'</div>
+          <div class="answer-field">
+            <label for="ans-t5">✓ Verification — Result of final getent (or removal message):</label>
+            <textarea id="ans-t5" rows="2" placeholder="Entry successfully removed" aria-required="true"></textarea>
+          </div>
+        </div>
+
+        <div class="task-block">
+          <span class="badge badge-c">Part C</span>
+          <h3>Task 6 – Global vs Local Nameserver</h3>
+          <p>In 2–3 sentences, explain the difference between a global Internet nameserver and a local/subnetwork nameserver, and why a classroom might use a local TLD such as .cis.</p>
+          <div class="answer-field">
+            <label for="ans-t6">Your explanation:</label>
+            <textarea id="ans-t6" rows="4" placeholder="Global nameservers… Local nameserver only serves the private network… .cis allows practice without public domains…" aria-required="true"></textarea>
+          </div>
+        </div>
+
+        <div class="task-block">
+          <span class="badge badge-c">Part C</span>
+          <h3>Task 7 – External DNS Lookup</h3>
+          <div class="cmd-list">getent hosts google.com || host google.com</div>
+          <div class="answer-field">
+            <label for="ans-t7">✓ Verification — One IP address returned for google.com:</label>
+            <textarea id="ans-t7" rows="2" placeholder="e.g. 142.250.x.x" aria-required="true"></textarea>
+          </div>
+        </div>
+
+        <div class="tip">💡 Examine config files, add/test/remove a static host entry, then complete reflections. Theme toggle available.</div>
+      </div>
+    </aside>
+
+    <section class="card terminal-wrap" aria-label="Terminal">
+      <div class="term-chrome" aria-hidden="true">
+        <span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span>
+        <span class="term-title">student@cnm-lab: ~ — bash</span>
+      </div>
+      <div class="term-body">
+        <div id="term-output" role="log" aria-live="polite"></div>
+        <div class="term-input-row">
+          <span class="prompt-label">student@cnm-lab:~$</span>
+          <input type="text" id="cmd-input" autocomplete="off" spellcheck="false" aria-label="Command input" />
+        </div>
+      </div>
+    </section>
+  </main>
+  <p class="footer-note">Central New Mexico Community College · CIST 1680 · Client-side lab · No data leaves your browser</p>
+  <div class="modal-overlay" id="feedback-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal">
+      <div class="modal-header"><h2 id="modal-title">Assessment Feedback</h2>
+        <button type="button" class="modal-close" id="modal-close" aria-label="Close">&times;</button></div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+  <script>
+  (function(){
+    let hostsContent = `127.0.0.1\tlocalhost
+127.0.1.1\tcnm-lab
+::1\t\tlocalhost ip6-localhost ip6-loopback`;
+    let hostsBak = hostsContent;
+    let entryAdded = false;
+
+    const RESOLV = `nameserver 8.8.8.8
+nameserver 1.1.1.1
+search localdomain`;
+    const NSSWITCH = `passwd:         files systemd
+group:          files systemd
+hosts:          files dns
+networks:       files
+protocols:      db files
+services:       db files`;
+
+    let history=[], historyIndex=-1, commandLog=[];
+    const outputEl=document.getElementById('term-output'), inputEl=document.getElementById('cmd-input');
+    function escapeHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+    function appendLine(html,cls){const d=document.createElement('div');d.className='term-line'+(cls?' '+cls:'');d.innerHTML=html;outputEl.appendChild(d);outputEl.scrollTop=outputEl.scrollHeight;}
+    function printCmd(cmd){appendLine('<span class="term-prompt">student@cnm-lab:~$</span> <span class="term-cmd">'+escapeHtml(cmd)+'</span>');}
+
+    function runCommand(raw){
+      const t=raw.trim(); if(!t) return;
+      printCmd(t); commandLog.push(t); history.push(t); historyIndex=history.length;
+
+      // echo ... | sudo tee -a /etc/hosts
+      if(/echo\s+.*tee\s+-a\s+\/etc\/hosts/i.test(t) || /tee\s+-a\s+\/etc\/hosts/i.test(t)){
+        if(!hostsContent.includes('labserver.cis')){
+          hostsContent += '\n10.10.10.50   labserver.cis';
+          entryAdded = true;
+        }
+        appendLine('10.10.10.50   labserver.cis');
+        return;
+      }
+
+      let line=t.replace(/\s*2>\s*\/dev\/null/g,'').trim();
+      const tokens=line.split(/\s+/); const cmd=tokens[0];
+
+      if(cmd==='help'){appendLine('cat, grep, getent, ping, host, cp, echo, tee, help, clear\nFiles: /etc/hosts, /etc/resolv.conf, /etc/nsswitch.conf'); return;}
+      if(cmd==='clear'){outputEl.innerHTML=''; return;}
+      if(cmd==='sudo'){ runCommand(tokens.slice(1).join(' ')); return; }
+
+      if(cmd==='cat'){
+        const f=tokens[1]||'';
+        if(f.includes('hosts')&&!f.includes('bak')) appendLine(escapeHtml(hostsContent));
+        else if(f.includes('resolv')) appendLine(escapeHtml(RESOLV));
+        else if(f.includes('nsswitch')) appendLine(escapeHtml(NSSWITCH));
+        else if(f.includes('hosts.bak')) appendLine(escapeHtml(hostsBak));
+        else appendLine('cat: '+f+': No such file','term-err');
+        return;
+      }
+      if(cmd==='grep'){
+        if(line.includes('nsswitch')||line.includes('hosts')){
+          appendLine('hosts:          files dns');
+        } else appendLine('');
+        return;
+      }
+      if(cmd==='cp'){
+        if(line.includes('hosts.bak') && line.includes('/etc/hosts') && !line.includes('hosts.bak /etc/hosts.bak')){
+          // restore: cp hosts.bak hosts
+          if(line.indexOf('hosts.bak') < line.lastIndexOf('/etc/hosts') || line.includes('hosts.bak /etc/hosts')){
+            hostsContent = hostsBak;
+            entryAdded = false;
+          }
+        } else if(line.includes('/etc/hosts') && line.includes('hosts.bak')){
+          hostsBak = hostsContent;
+        }
+        return;
+      }
+      if(cmd==='getent'){
+        const name=tokens[2]||tokens[1]||'';
+        if(name.includes('labserver')){
+          if(entryAdded || hostsContent.includes('labserver.cis')) appendLine('10.10.10.50    labserver.cis');
+          else appendLine("Entry successfully removed");
+        } else if(name.includes('google')){
+          appendLine('142.250.72.14  google.com');
+        } else appendLine('');
+        return;
+      }
+      if(cmd==='ping'){
+        if(line.includes('labserver')){
+          if(entryAdded||hostsContent.includes('labserver')) appendLine('PING labserver.cis (10.10.10.50) 56(84) bytes of data.\n--- labserver.cis ping statistics ---\n2 packets transmitted, 0 received, 100% packet loss');
+          else appendLine('ping: labserver.cis: Name or service not known','term-err');
+        } else appendLine('PING …\n2 packets transmitted, 2 received');
+        return;
+      }
+      if(cmd==='host'){
+        if(line.includes('google')) appendLine('google.com has address 142.250.72.14');
+        else appendLine('Host '+ (tokens[1]||'') +' not found');
+        return;
+      }
+      if(cmd==='echo'){ appendLine(tokens.slice(1).join(' ').replace(/^['"]|['"]$/g,'')); return; }
+      if(cmd==='tee'){ return; }
+      appendLine('bash: '+escapeHtml(cmd)+': command not found','term-err');
+    }
+
+    inputEl.addEventListener('keydown',function(e){
+      if(e.key==='Enter'){const v=inputEl.value;inputEl.value='';runCommand(v);}
+      else if(e.key==='ArrowUp'){e.preventDefault();if(historyIndex>0){historyIndex--;inputEl.value=history[historyIndex]||'';}}
+      else if(e.key==='ArrowDown'){e.preventDefault();if(historyIndex<history.length-1){historyIndex++;inputEl.value=history[historyIndex]||'';}else{historyIndex=history.length;inputEl.value='';}}
+    });
+
+    function getAns(id){const el=document.getElementById(id);return el?el.value.trim():'';}
+
+    function evaluateLab(){
+      const log=commandLog.map(c=>c.toLowerCase());
+      const has=s=>log.some(c=>c.includes(s));
+      const r={well:[],improve:[],score:0,max:0};
+
+      r.max+=5;
+      if(has('cat')&&has('hosts')){r.score++;r.well.push('Viewed /etc/hosts');} else r.improve.push('Missing cat /etc/hosts');
+      if(has('resolv')){r.score++;r.well.push('Viewed /etc/resolv.conf');} else r.improve.push('Missing cat /etc/resolv.conf');
+      if(has('nsswitch')||has('grep hosts')){r.score++;r.well.push('Checked nsswitch hosts line');} else r.improve.push('Missing grep hosts /etc/nsswitch.conf');
+      if(getAns('ans-t1').length>15){r.score+=2;r.well.push('Recorded current name-resolution config');} else r.improve.push('Task 1 verification incomplete');
+
+      r.max+=2;
+      const t2=getAns('ans-t2').toLowerCase();
+      if(t2.length>25&&(t2.includes('file')||t2.includes('dns')||t2.includes('first')||t2.includes('order'))){r.score+=2;r.well.push('Explained nsswitch hosts order');}
+      else r.improve.push('Task 2: explain hosts: files dns order');
+
+      r.max+=4;
+      if(has('cp')&&has('hosts.bak')||has('tee')){r.score+=1;r.well.push('Backed up or appended hosts');} else r.improve.push('Missing backup/append hosts steps');
+      if(has('tee')||has('labserver')||entryAdded){r.score+=1;r.well.push('Added static labserver.cis entry');} else r.improve.push('Missing static hosts entry');
+      if(getAns('ans-t3').includes('10.10.10.50')||getAns('ans-t3').includes('labserver')){r.score+=2;r.well.push('Recorded new hosts line');} else r.improve.push('Task 3 verification incomplete');
+
+      r.max+=3;
+      if(has('getent')&&has('labserver')){r.score+=1;r.well.push('Tested getent hosts labserver.cis');} else r.improve.push('Missing getent hosts labserver.cis');
+      if(getAns('ans-t4').includes('10.10.10.50')||getAns('ans-t4').includes('10.10')){r.score+=2;r.well.push('Recorded resolved IP');} else r.improve.push('Task 4: record IP from getent');
+
+      r.max+=3;
+      if((has('cp')&&has('hosts.bak'))||has('removed')){r.score+=1;r.well.push('Restored hosts backup');} else r.improve.push('Missing restore from hosts.bak');
+      if(getAns('ans-t5').length>5){r.score+=2;r.well.push('Confirmed entry removed');} else r.improve.push('Task 5 verification incomplete');
+
+      r.max+=3;
+      const t6=getAns('ans-t6').toLowerCase();
+      if(t6.length>40){let pts=1;if(t6.includes('global')||t6.includes('internet')||t6.includes('public'))pts++;if(t6.includes('local')||t6.includes('private')||t6.includes('.cis')||t6.includes('classroom'))pts++;r.score+=Math.min(pts,3);r.well.push('Explained global vs local nameservers');}
+      else r.improve.push('Task 6 explanation too short or missing');
+
+      r.max+=2;
+      if(has('getent')&&has('google')||has('host')&&has('google')){r.score++;r.well.push('Queried external DNS for google.com');} else r.improve.push('Missing getent/host google.com');
+      if(getAns('ans-t7').length>4){r.score++;r.well.push('Recorded google.com IP');} else r.improve.push('Task 7 verification incomplete');
+
+      r.score=Math.round(r.score);
+      return r;
+    }
+
+    function showFeedback(){
+      const r=evaluateLab(); const pct=Math.round((r.score/r.max)*100);
+      let status,cls; if(pct>=90){status='🏆 Mastered';cls='score-mastered';} else if(pct>=70){status='✓ Proficient – Minor Revisions';cls='score-partial';} else if(pct>=50){status='🟡 Needs Revision';cls='score-partial';} else{status='🔴 Incomplete – Please Retry';cls='score-needs';}
+      let html='<div class="score-banner '+cls+'">'+status+'<br><span style="font-size:.95rem;font-weight:500">Score: '+r.score+' / '+r.max+' ('+pct+'%)</span><div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:'+pct+'%"></div></div></div>';
+      if(r.well.length){html+='<div class="fb-section"><h3>🟢 What you did well</h3><ul>';r.well.forEach(w=>html+='<li>'+w+'</li>');html+='</ul></div>';}
+      if(r.improve.length){html+='<div class="fb-section"><h3>🟡 Areas to improve</h3><ul>';r.improve.forEach(w=>html+='<li>'+w+'</li>');html+='</ul></div>';}
+      html+='<div class="fb-section"><h3>📌 Next steps</h3><ul><li>Complete missing steps and answer fields.</li><li>Use Reset Lab if needed.</li></ul></div>';
+      document.getElementById('modal-body').innerHTML=html;
+      document.getElementById('feedback-modal').classList.add('open');
+      document.getElementById('modal-close').focus();
+    }
+
+    function resetLab(){
+      hostsContent=`127.0.0.1\tlocalhost\n127.0.1.1\tcnm-lab\n::1\t\tlocalhost ip6-localhost ip6-loopback`;
+      hostsBak=hostsContent; entryAdded=false;
+      history=[]; historyIndex=-1; commandLog=[]; outputEl.innerHTML='';
+      ['ans-t1','ans-t2','ans-t3','ans-t4','ans-t5','ans-t6','ans-t7'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+      appendLine('<span class="term-info">Lab reset.</span>');
+      appendLine('Type <span style="color:var(--cnm-gold)">help</span> or start with: cat /etc/hosts');
+      inputEl.focus();
+    }
+
+    document.getElementById('btn-submit').addEventListener('click',showFeedback);
+    document.getElementById('btn-reset').addEventListener('click',function(){if(confirm('Reset lab?'))resetLab();});
+    document.getElementById('btn-help').addEventListener('click',function(){runCommand('help');inputEl.focus();});
+    document.getElementById('modal-close').addEventListener('click',function(){document.getElementById('feedback-modal').classList.remove('open');});
+    document.getElementById('feedback-modal').addEventListener('click',function(e){if(e.target.id==='feedback-modal')document.getElementById('feedback-modal').classList.remove('open');});
+    document.getElementById('btn-theme').addEventListener('click',function(){
+      const html=document.documentElement;
+      const next=html.getAttribute('data-theme')==='light'?'dark':'light';
+      if(next==='light') html.setAttribute('data-theme','light'); else html.removeAttribute('data-theme');
+      localStorage.setItem('cnm-lab-theme',next);
+    });
+    if(localStorage.getItem('cnm-lab-theme')==='light') document.documentElement.setAttribute('data-theme','light');
+
+    appendLine('<span class="term-info">Welcome — Networking FA2: Local Name Resolution</span>');
+    appendLine('CNM CIST 1680 · /etc/hosts, resolv.conf, nsswitch.conf');
+    appendLine('student@cnm-lab:~$ <span style="opacity:.6"># try: cat /etc/hosts</span>');
+    inputEl.focus();
+  })();
+  </script>
+</body>
+</html>
