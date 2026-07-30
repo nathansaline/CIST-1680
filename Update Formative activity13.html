@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CIST 1680 | Scripting FA1 – Basic Bash Scripts</title>
+  <style>
+    :root {
+      --cnm-gold: #F6BE00; --cnm-sky: #41B6E6; --bg-deep: #0b1320; --bg-card: #131e30;
+      --bg-terminal: #0a1018; --text-main: #e8eef7; --text-muted: #8b9bb4; --border: #1e2d45;
+      --success: #3dd68c; --warn: #f6be00; --error: #ff6b6b; --prompt: #41B6E6; --focus-ring: #F6BE00;
+    }
+    [data-theme="light"] {
+      --bg-deep: #f0f4f8; --bg-card: #fff; --bg-terminal: #1e293b; --text-main: #0f172a;
+      --text-muted: #475569; --border: #cbd5e1; --prompt: #0284c7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-deep); color: var(--text-main); min-height: 100vh; line-height: 1.5; }
+    a.skip-link { position: absolute; left: -9999px; top: 0; background: var(--cnm-gold); color: #0b1320; padding: .5rem 1rem; z-index: 9999; font-weight: 700; }
+    a.skip-link:focus { left: .5rem; top: .5rem; }
+    .site-header { background: linear-gradient(135deg,#0d1a2d,#131e30); border-bottom: 2px solid var(--cnm-gold); padding: 1rem 1.5rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; }
+    [data-theme="light"] .site-header { background: linear-gradient(135deg,#e2e8f0,#f8fafc); }
+    .brand { display: flex; align-items: center; gap: .75rem; }
+    .brand-badge { background: var(--cnm-gold); color: #0b1320; font-weight: 800; font-size: .75rem; padding: .25rem .5rem; border-radius: 4px; }
+    .brand h1 { font-size: 1.05rem; font-weight: 600; } .brand h1 span { color: var(--cnm-sky); }
+    .header-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+    button { font-family: inherit; cursor: pointer; border: none; border-radius: 6px; font-weight: 600; font-size: .875rem; padding: .55rem 1rem; }
+    button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+    .btn-gold { background: var(--cnm-gold); color: #0b1320; }
+    .btn-sky { background: var(--cnm-sky); color: #0b1320; }
+    .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--cnm-sky); color: var(--cnm-sky); }
+    .layout { display: grid; grid-template-columns: 1fr 1.1fr; gap: 1.25rem; padding: 1.25rem; max-width: 1400px; margin: 0 auto; }
+    @media (max-width: 960px) { .layout { grid-template-columns: 1fr; } }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .card-header { background: rgba(0,0,0,.2); padding: .75rem 1rem; border-bottom: 1px solid var(--border); }
+    [data-theme="light"] .card-header { background: #f1f5f9; }
+    .card-header h2 { font-size: .95rem; font-weight: 600; color: var(--cnm-gold); }
+    .card-body { padding: 1rem; }
+    .instructions { max-height: calc(100vh - 150px); overflow-y: auto; }
+    .task-block { margin-bottom: 1.15rem; padding-bottom: .95rem; border-bottom: 1px dashed var(--border); }
+    .task-block:last-child { border-bottom: none; }
+    .task-block h3 { font-size: .9rem; color: var(--cnm-sky); margin-bottom: .35rem; }
+    .task-block p { font-size: .85rem; color: var(--text-muted); margin-bottom: .3rem; }
+    .cmd-list { background: var(--bg-terminal); border-radius: 6px; padding: .55rem .75rem; margin: .45rem 0; font-family: Consolas, monospace; font-size: .8rem; color: #b8e0c8; line-height: 1.5; }
+    .badge { display: inline-block; font-size: .7rem; padding: .12rem .4rem; border-radius: 4px; font-weight: 700; }
+    .badge-a { background: #1a3a5c; color: var(--cnm-sky); }
+    .badge-b { background: #1a3a2c; color: #3dd68c; }
+    .badge-c { background: #3a2a1a; color: var(--cnm-gold); }
+    .answer-field { margin-top: .5rem; }
+    .answer-field label { display: block; font-size: .75rem; color: var(--cnm-gold); margin-bottom: .25rem; font-weight: 600; }
+    .answer-field textarea {
+      width: 100%; background: var(--bg-terminal); border: 1px solid var(--border); border-radius: 6px;
+      color: #e8eef7; font-family: Consolas, monospace; font-size: .78rem; padding: .5rem .6rem; resize: vertical; min-height: 52px; line-height: 1.4;
+    }
+    .terminal-wrap { display: flex; flex-direction: column; height: calc(100vh - 150px); min-height: 460px; }
+    .term-chrome { background: #1a2438; padding: .5rem .85rem; display: flex; align-items: center; gap: .45rem; border-bottom: 1px solid var(--border); }
+    .dot { width: 11px; height: 11px; border-radius: 50%; } .dot-red { background: #ff5f56; } .dot-yellow { background: #ffbd2e; } .dot-green { background: #27c93f; }
+    .term-title { margin-left: .5rem; font-size: .75rem; color: var(--text-muted); font-family: monospace; }
+    .term-body { flex: 1; background: var(--bg-terminal); display: flex; flex-direction: column; overflow: hidden; }
+    #term-output { flex: 1; overflow-y: auto; padding: .8rem 1rem; font-family: Consolas, monospace; font-size: .82rem; line-height: 1.45; white-space: pre-wrap; word-break: break-word; color: #c8d6e5; }
+    .term-prompt { color: var(--prompt); } .term-cmd { color: #e8eef7; } .term-err { color: var(--error); } .term-info { color: var(--cnm-gold); }
+    .term-input-row { display: flex; align-items: center; padding: .5rem 1rem .65rem; border-top: 1px solid var(--border); background: #0c1420; gap: .3rem; }
+    .prompt-label { font-family: monospace; font-size: .82rem; color: var(--prompt); white-space: nowrap; }
+    #cmd-input { flex: 1; background: transparent; border: none; outline: none; color: #e8eef7; font-family: Consolas, monospace; font-size: .82rem; caret-color: var(--cnm-gold); }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(5,10,20,.85); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; max-width: 640px; width: 100%; max-height: 90vh; overflow-y: auto; }
+    .modal-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .modal-header h2 { font-size: 1.1rem; color: var(--cnm-gold); }
+    .modal-close { background: transparent; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer; }
+    .modal-body { padding: 1.25rem; }
+    .score-banner { text-align: center; padding: 1rem; border-radius: 8px; margin-bottom: 1.1rem; font-weight: 700; font-size: 1.1rem; }
+    .score-mastered { background: rgba(61,214,140,.15); color: var(--success); border: 1px solid var(--success); }
+    .score-partial { background: rgba(246,190,0,.12); color: var(--warn); border: 1px solid var(--warn); }
+    .score-needs { background: rgba(255,107,107,.12); color: var(--error); border: 1px solid var(--error); }
+    .fb-section { margin-bottom: 1rem; } .fb-section h3 { font-size: .9rem; margin-bottom: .4rem; }
+    .fb-section ul { list-style: none; } .fb-section li { font-size: .85rem; color: var(--text-muted); padding: .25rem 0 .25rem 1.1rem; position: relative; }
+    .fb-section li::before { content: '•'; position: absolute; left: .25rem; color: var(--cnm-sky); }
+    .progress-bar-wrap { height: 8px; background: #1a2438; border-radius: 4px; overflow: hidden; margin-top: .45rem; }
+    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--cnm-sky), var(--cnm-gold)); border-radius: 4px; transition: width .4s; }
+    .footer-note { text-align: center; padding: .7rem; font-size: .75rem; color: var(--text-muted); border-top: 1px solid var(--border); }
+    .tip { font-size: .78rem; color: var(--text-muted); margin-top: .55rem; padding: .5rem .65rem; background: rgba(65,182,230,.08); border-left: 3px solid var(--cnm-sky); border-radius: 0 4px 4px 0; }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <header class="site-header" role="banner">
+    <div class="brand"><span class="brand-badge">CNM</span><h1>CIST 1680 · <span>Script FA1 Basic Scripts</span></h1></div>
+    <div class="header-actions">
+      <button type="button" class="btn-ghost" id="btn-theme" aria-label="Toggle theme">Theme</button>
+      <button type="button" class="btn-ghost" id="btn-reset" aria-label="Reset lab">Reset Lab</button>
+      <button type="button" class="btn-sky" id="btn-help" aria-label="Help">Help</button>
+      <button type="button" class="btn-gold" id="btn-submit" aria-label="Submit">Submit Assessment</button>
+    </div>
+  </header>
+  <main id="main-content" class="layout">
+    <aside class="card instructions" aria-label="Lab instructions">
+      <div class="card-header"><h2>📋 Lab Objectives</h2></div>
+      <div class="card-body">
+        <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:1rem;"><strong style="color:var(--cnm-gold)">MLO 1</strong> — Variables, shebang, and executable permissions for Bash scripts.</p>
+
+        <div class="task-block">
+          <span class="badge badge-a">Part A</span>
+          <h3>Task 1 – Create hello.sh</h3>
+          <p>In this simulator, create the script with a here-doc style write (no nano needed):</p>
+          <div class="cmd-list">mkdir -p ~/scripts<br>cat &gt; ~/scripts/hello.sh &lt;&lt; 'EOF'<br>#!/bin/bash<br>echo "Hello from my first script!"<br>echo "Today is $(date)"<br>EOF<br>cat ~/scripts/hello.sh</div>
+          <div class="answer-field">
+            <label for="ans-t1">✓ Verification — Confirm shebang and both echo lines appear:</label>
+            <textarea id="ans-t1" rows="3" placeholder="#!/bin/bash&#10;echo &quot;Hello from my first script!&quot;&#10;echo &quot;Today is …&quot;" aria-required="true"></textarea>
+          </div>
+        </div>
+
+        <div class="task-block">
+          <span class="badge badge-a">Part A</span>
+          <h3>Task 2 – Make Executable</h3>
+          <div class="cmd-list">ls -l ~/scripts/hello.sh<br>chmod u+x ~/scripts/hello.sh<br>ls -l ~/scripts/hello.sh</div>
+          <div class="answer-field">
+            <label for="ans-t2">✓ Verification — Permission string before and after chmod:</label>
+            <textarea id="ans-t2" rows="2" placeholder="Before: -rw-r--r--&#10;After:  -rwxr--r--" aria-required="true"></textarea>
+          </div>
+        </div>
+
+        <div class="task-block">
+          <span class="badge badge-a">Part A</span>
+          <h3>Task 3 – Run the Script</h3>
+          <div class="cmd-list">bash ~/scripts/hello.sh<br>~/scripts/hello.sh</div>
+          <div class="answer-field">
+            <label for="ans-t3">✓ Verification — Paste the exact script output:</label>
+            <textarea id="ans-t3" rows="3" placeholder="Hello from my first script!&#10;Today is …" aria-required="true"></textarea>
+          </div>
+        </div>
+
+        <div class="task-block">
+          <span class="badge badge-b">Part B</span>
+          <h3>Task 4 – checkuser.sh</h3>
+          <div class="cmd-list">cat &gt; ~/scripts/checkuser.sh &lt;&lt; 'EOF'<br>#!/bin/bash<br>USER_NAME=$(whoami)<br>echo "Current user is: $USER_NAME"<br>if [ "$USER_NAME" = "root" ]; then<br>  echo "Warning: You are running as root!"<br>else<br>  echo "You are a regular user. Safe to continue."<br>fi<br>EOF<br>chmod u+x ~/scripts/checkuser.sh<br>~/scripts/checkuser.sh</div>
+          <div class="answer-field">
+            <label for="ans-t4">✓ Verification — Full output of checkuser.sh:</label>
+            <textarea id="ans-t4" rows="3" placeholder="Current user is: student&#10;You are a regular user. Safe to continue." aria-required="true"></textarea>
+          </div>
+        </div>
+
+        <div class="task-block">
+          <span class="badge badge-b">Part B</span>
+          <h3>Task 5 – Shebang &amp; chmod Explained</h3>
+          <p>In 2–3 sentences, explain what the shebang does and why <code style="color:var(--cnm-gold)">chmod u+x</code> is required to run a script by name.</p>
+          <div class="answer-field">
+            <label for="ans-t5">Your explanation:</label>
+            <textarea id="ans-t5" rows="4" placeholder="The shebang tells the OS which interpreter… Without execute permission the kernel refuses…" aria-required="true"></textarea>
+          </div>
+        </div>
+
+        <div class="task-block">
+          <span class="badge badge-c">Part C</span>
+          <h3>Task 6 – Exit Codes</h3>
+          <div class="cmd-list">ls /tmp<br>echo $?<br>ls /nonexistent_directory_12345<br>echo $?</div>
+          <div class="answer-field">
+            <label for="ans-t6">✓ Verification — $? after success and after failure:</label>
+            <textarea id="ans-t6" rows="2" placeholder="Success: 0&#10;Failure: 2 (or non-zero)" aria-required="true"></textarea>
+          </div>
+        </div>
+
+        <div class="tip">💡 Create scripts with cat &gt; file &lt;&lt; 'EOF' … EOF, chmod, run, then fill every box. Theme toggle available.</div>
+      </div>
+    </aside>
+
+    <section class="card terminal-wrap" aria-label="Terminal">
+      <div class="term-chrome" aria-hidden="true">
+        <span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span>
+        <span class="term-title">student@cnm-lab: ~ — bash</span>
+      </div>
+      <div class="term-body">
+        <div id="term-output" role="log" aria-live="polite"></div>
+        <div class="term-input-row">
+          <span class="prompt-label" id="prompt-label">student@cnm-lab:~$</span>
+          <input type="text" id="cmd-input" autocomplete="off" spellcheck="false" aria-label="Command input" />
+        </div>
+      </div>
+    </section>
+  </main>
+  <p class="footer-note">Central New Mexico Community College · CIST 1680 · Client-side lab · No data leaves your browser</p>
+  <div class="modal-overlay" id="feedback-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal">
+      <div class="modal-header"><h2 id="modal-title">Assessment Feedback</h2>
+        <button type="button" class="modal-close" id="modal-close" aria-label="Close">&times;</button></div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+  <script>
+  (function(){
+    const HOME='/home/student';
+    function initialFS(){return{'/':{type:'dir',children:{home:{type:'dir',children:{student:{type:'dir',children:{}}}},tmp:{type:'dir',children:{}}}}};}
+    let fs=initialFS(), cwd=HOME, history=[], historyIndex=-1, commandLog=[], lastExit=0;
+    let heredoc=null;
+
+    function normalizePath(path){
+      if(!path||path==='~')return HOME;
+      if(path.startsWith('~/'))path=HOME+path.slice(1);
+      if(path.startsWith('~'))path=HOME+path.slice(1);
+      let parts=path.startsWith('/')?path.split('/').filter(Boolean):(cwd==='/'?[]:cwd.split('/').filter(Boolean)).concat(path.split('/').filter(Boolean));
+      const r=[]; for(const p of parts){if(p==='.'||p==='')continue;if(p==='..'){r.pop();continue;}r.push(p);} return '/'+r.join('/');
+    }
+    function getNode(path){
+      path=normalizePath(path); if(path==='/')return fs['/'];
+      const parts=path.split('/').filter(Boolean); let node=fs['/'];
+      for(const p of parts){if(!node||node.type!=='dir'||!node.children[p])return null; node=node.children[p];}
+      return node;
+    }
+    function ensureDir(path){
+      path=normalizePath(path); const parts=path.split('/').filter(Boolean); let node=fs['/'];
+      for(const p of parts){if(!node.children[p])node.children[p]={type:'dir',mode:'755',children:{}}; node=node.children[p];}
+      return node;
+    }
+    function modeStr(mode,type){
+      const m=parseInt(mode,8);
+      const p=[(m&0o400)?'r':'-',(m&0o200)?'w':'-',(m&0o100)?'x':'-',(m&0o040)?'r':'-',(m&0o020)?'w':'-',(m&0o010)?'x':'-',(m&0o004)?'r':'-',(m&0o002)?'w':'-',(m&0o001)?'x':'-'].join('');
+      return (type==='dir'?'d':'-')+p;
+    }
+    function shortPath(p){return (p===HOME||p.startsWith(HOME+'/'))?'~'+p.slice(HOME.length):p;}
+    function updatePrompt(){
+      const s=shortPath(cwd);
+      document.getElementById('prompt-label').textContent='student@cnm-lab:'+s+'$';
+      document.querySelector('.term-title').textContent='student@cnm-lab: '+s+' — bash';
+    }
+
+    const outputEl=document.getElementById('term-output'), inputEl=document.getElementById('cmd-input');
+    function escapeHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+    function appendLine(html,cls){const d=document.createElement('div');d.className='term-line'+(cls?' '+cls:'');d.innerHTML=html;outputEl.appendChild(d);outputEl.scrollTop=outputEl.scrollHeight;}
+    function printCmd(cmd){appendLine('<span class="term-prompt">student@cnm-lab:'+shortPath(cwd)+'$</span> <span class="term-cmd">'+escapeHtml(cmd)+'</span>');}
+
+    function writeFile(path, content, mode){
+      const full=normalizePath(path); const parts=full.split('/').filter(Boolean); const name=parts.pop();
+      const parent=ensureDir('/'+parts.join('/'));
+      parent.children[name]={type:'file',mode:mode||'644',content:content};
+    }
+    function runScript(path){
+      const node=getNode(path);
+      if(!node||node.type!=='file'){ lastExit=127; appendLine('bash: '+path+': No such file','term-err'); return; }
+      const lines=node.content.split('\n');
+      for(const line of lines){
+        const t=line.trim();
+        if(!t||t.startsWith('#!')) continue;
+        if(t.startsWith('USER_NAME=')) continue;
+        if(t.startsWith('if ')||t.startsWith('else')||t.startsWith('fi')||t.startsWith('then')) continue;
+        if(t.includes('whoami')||t.includes('$USER_NAME')){
+          if(t.includes('echo')&&t.includes('Current user')) appendLine('Current user is: student');
+          else if(t.includes('root')) continue;
+          else if(t.includes('regular')||t.includes('Safe')) appendLine('You are a regular user. Safe to continue.');
+          continue;
+        }
+        if(t.startsWith('echo ')){
+          let msg=t.slice(5).replace(/^["']|["']$/g,'');
+          if(msg.includes('$(date)')||msg.includes('$(')) msg=msg.replace(/\$\(date\)/g, new Date().toDateString()).replace(/\$\([^)]+\)/g,'…');
+          appendLine(msg);
+        }
+      }
+      lastExit=0;
+    }
+
+    function runCommand(raw){
+      const trimmed=raw.trim();
+      if(heredoc){
+        if(trimmed===heredoc.marker){
+          writeFile(heredoc.path, heredoc.lines.join('\n')+'\n', '644');
+          heredoc=null; return;
+        }
+        heredoc.lines.push(raw); return;
+      }
+      if(!trimmed) return;
+      printCmd(trimmed); commandLog.push(trimmed); history.push(trimmed); historyIndex=history.length;
+
+      // cat > path << 'EOF'
+      const hd=trimmed.match(/^cat\s+>\s*(\S+)\s*<<\s*['"]?(\w+)['"]?$/);
+      if(hd){ heredoc={path:hd[1], marker:hd[2], lines:[]}; return; }
+
+      const tokens=trimmed.split(/\s+/); const cmd=tokens[0];
+
+      if(cmd==='help'){ appendLine('mkdir, cat, ls, chmod, bash, whoami, echo, date, clear, help\nCreate scripts: cat > ~/scripts/hello.sh << \'EOF\' … EOF'); lastExit=0; return; }
+      if(cmd==='clear'){ outputEl.innerHTML=''; return; }
+      if(cmd==='pwd'){ appendLine(cwd); lastExit=0; return; }
+      if(cmd==='whoami'){ appendLine('student'); lastExit=0; return; }
+      if(cmd==='date'){ appendLine(new Date().toString()); lastExit=0; return; }
+      if(cmd==='mkdir'){
+        tokens.slice(1).filter(a=>!a.startsWith('-')).forEach(p=>ensureDir(p)); lastExit=0; return;
+      }
+      if(cmd==='cat' && tokens[1] && !trimmed.includes('<<')){
+        const node=getNode(tokens[1]);
+        if(!node){ appendLine('cat: No such file','term-err'); lastExit=1; return; }
+        appendLine(escapeHtml(node.content||'')); lastExit=0; return;
+      }
+      if(cmd==='ls'){
+        let long=false, pathArg=null;
+        tokens.slice(1).forEach(a=>{ if(a.startsWith('-')&&a.includes('l')) long=true; else if(!a.startsWith('-')) pathArg=a; });
+        const path=pathArg?normalizePath(pathArg):cwd; const node=getNode(path);
+        if(!node){ appendLine('ls: cannot access','term-err'); lastExit=2; return; }
+        if(node.type==='file'){
+          appendLine((long?modeStr(node.mode,'file')+' 1 student student  '+((node.content||'').length)+' Jan 15 12:00 ':'')+path.split('/').pop());
+          lastExit=0; return;
+        }
+        const names=Object.keys(node.children||{}).sort();
+        if(long){
+          const lines=['total '+(names.length*4)];
+          names.forEach(n=>{ const c=node.children[n]; lines.push(modeStr(c.mode||'644',c.type)+' 1 student student  '+(c.content?c.content.length:4096)+' Jan 15 12:00 '+n); });
+          appendLine(escapeHtml(lines.join('\n')));
+        } else appendLine(names.join('  ')||'');
+        lastExit=0; return;
+      }
+      if(cmd==='chmod'){
+        const modeTok=tokens[1], target=tokens[2];
+        if(!modeTok||!target){ lastExit=1; return; }
+        const node=getNode(target);
+        if(!node){ appendLine('chmod: cannot access','term-err'); lastExit=1; return; }
+        if(modeTok==='u+x'||modeTok==='+x'){
+          const m=parseInt(node.mode||'644',8); node.mode=(m|0o100).toString(8);
+        } else if(/^[0-7]{3,4}$/.test(modeTok)) node.mode=modeTok.slice(-3);
+        lastExit=0; return;
+      }
+      if(cmd==='bash'||cmd==='sh'){
+        if(tokens[1]) runScript(tokens[1]); else { lastExit=0; }
+        return;
+      }
+      // direct script run: ~/scripts/hello.sh
+      if(trimmed.startsWith('~/')||trimmed.startsWith('/')){
+        const p=normalizePath(trimmed.split(/\s+/)[0]);
+        const node=getNode(p);
+        if(node&&node.type==='file'){
+          if(!(parseInt(node.mode,8)&0o100)){ appendLine('bash: Permission denied','term-err'); lastExit=126; return; }
+          runScript(p); return;
+        }
+      }
+      if(cmd==='echo'){
+        if(tokens[1]==='$?'){ appendLine(String(lastExit)); return; }
+        appendLine(tokens.slice(1).join(' ').replace(/^["']|["']$/g,'')); lastExit=0; return;
+      }
+      if(cmd==='ls'||cmd==='cd'){ /* handled above */ }
+      // failed ls for exit code demo
+      if(cmd==='ls' && tokens[1] && tokens[1].includes('nonexistent')){
+        appendLine('ls: cannot access \''+tokens[1]+'\': No such file or directory','term-err'); lastExit=2; return;
+      }
+      appendLine('bash: '+escapeHtml(cmd)+': command not found','term-err'); lastExit=127;
+    }
+
+    inputEl.addEventListener('keydown',function(e){
+      if(e.key==='Enter'){ const v=inputEl.value; inputEl.value=''; runCommand(v); }
+      else if(e.key==='ArrowUp'){ e.preventDefault(); if(historyIndex>0){ historyIndex--; inputEl.value=history[historyIndex]||''; }}
+      else if(e.key==='ArrowDown'){ e.preventDefault(); if(historyIndex<history.length-1){ historyIndex++; inputEl.value=history[historyIndex]||''; } else { historyIndex=history.length; inputEl.value=''; }}
+    });
+
+    function getAns(id){ const el=document.getElementById(id); return el?el.value.trim():''; }
+
+    function evaluateLab(){
+      const log=commandLog.map(c=>c.toLowerCase());
+      const has=s=>log.some(c=>c.includes(s));
+      const r={well:[],improve:[],score:0,max:0};
+      const hello=getNode(HOME+'/scripts/hello.sh');
+      const check=getNode(HOME+'/scripts/checkuser.sh');
+
+      r.max+=4;
+      if(has('mkdir')&&has('scripts')){ r.score++; r.well.push('Created ~/scripts'); } else r.improve.push('Missing mkdir -p ~/scripts');
+      if(hello||has('hello.sh')){ r.score++; r.well.push('Created hello.sh'); } else r.improve.push('Missing hello.sh creation');
+      if(getAns('ans-t1').includes('#!/bin/bash')||getAns('ans-t1').toLowerCase().includes('shebang')||getAns('ans-t1').includes('Hello')){ r.score+=2; r.well.push('Recorded hello.sh contents'); } else r.improve.push('Task 1 verification incomplete');
+
+      r.max+=3;
+      if(has('chmod')&&(has('u+x')||has('+x')||has('755'))){ r.score+=2; r.well.push('Made script executable'); } else r.improve.push('Missing chmod u+x');
+      if(getAns('ans-t2').length>8){ r.score++; r.well.push('Recorded before/after permissions'); } else r.improve.push('Task 2 verification incomplete');
+
+      r.max+=3;
+      if(has('bash')&&has('hello')||has('~/scripts/hello')){ r.score+=1; r.well.push('Ran hello.sh'); } else r.improve.push('Missing script execution');
+      if(getAns('ans-t3').toLowerCase().includes('hello')){ r.score+=2; r.well.push('Recorded script output'); } else r.improve.push('Task 3 verification incomplete');
+
+      r.max+=3;
+      if(check||has('checkuser')){ r.score++; r.well.push('Created checkuser.sh'); } else r.improve.push('Missing checkuser.sh');
+      if(getAns('ans-t4').toLowerCase().includes('user')||getAns('ans-t4').toLowerCase().includes('student')){ r.score+=2; r.well.push('Recorded conditional script output'); } else r.improve.push('Task 4 verification incomplete');
+
+      r.max+=3;
+      const t5=getAns('ans-t5').toLowerCase();
+      if(t5.length>40){ let pts=1; if(t5.includes('shebang')||t5.includes('#!')||t5.includes('interpreter')) pts++; if(t5.includes('chmod')||t5.includes('execut')||t5.includes('permission')) pts++; r.score+=Math.min(pts,3); r.well.push('Explained shebang and execute bit'); }
+      else r.improve.push('Task 5 explanation too short or missing');
+
+      r.max+=3;
+      if(has('echo $?')||has('echo "$?"')){ r.score++; r.well.push('Checked exit codes with $?'); } else r.improve.push('Missing echo $?');
+      if(getAns('ans-t6').includes('0')&&(getAns('ans-t6').includes('1')||getAns('ans-t6').includes('2')||getAns('ans-t6').toLowerCase().includes('non'))){ r.score+=2; r.well.push('Recorded success and failure exit codes'); }
+      else if(getAns('ans-t6').length>3){ r.score++; r.improve.push('Note both success (0) and failure (non-zero)'); }
+      else r.improve.push('Task 6 verification incomplete');
+
+      r.score=Math.round(r.score);
+      return r;
+    }
+
+    function showFeedback(){
+      const r=evaluateLab(); const pct=Math.round((r.score/r.max)*100);
+      let status,cls; if(pct>=90){status='🏆 Mastered';cls='score-mastered';} else if(pct>=70){status='✓ Proficient – Minor Revisions';cls='score-partial';} else if(pct>=50){status='🟡 Needs Revision';cls='score-partial';} else{status='🔴 Incomplete – Please Retry';cls='score-needs';}
+      let html='<div class="score-banner '+cls+'">'+status+'<br><span style="font-size:.95rem;font-weight:500">Score: '+r.score+' / '+r.max+' ('+pct+'%)</span><div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:'+pct+'%"></div></div></div>';
+      if(r.well.length){html+='<div class="fb-section"><h3>🟢 What you did well</h3><ul>';r.well.forEach(w=>html+='<li>'+w+'</li>');html+='</ul></div>';}
+      if(r.improve.length){html+='<div class="fb-section"><h3>🟡 Areas to improve</h3><ul>';r.improve.forEach(w=>html+='<li>'+w+'</li>');html+='</ul></div>';}
+      html+='<div class="fb-section"><h3>📌 Next steps</h3><ul><li>Complete missing commands and answer fields.</li><li>Use Reset Lab if needed.</li></ul></div>';
+      document.getElementById('modal-body').innerHTML=html;
+      document.getElementById('feedback-modal').classList.add('open');
+      document.getElementById('modal-close').focus();
+    }
+
+    function resetLab(){
+      fs=initialFS(); cwd=HOME; history=[]; historyIndex=-1; commandLog=[]; lastExit=0; heredoc=null;
+      outputEl.innerHTML='';
+      ['ans-t1','ans-t2','ans-t3','ans-t4','ans-t5','ans-t6'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+      updatePrompt();
+      appendLine('<span class="term-info">Lab reset.</span>');
+      appendLine('Type <span style="color:var(--cnm-gold)">help</span> or: mkdir -p ~/scripts');
+      inputEl.focus();
+    }
+
+    document.getElementById('btn-submit').addEventListener('click',showFeedback);
+    document.getElementById('btn-reset').addEventListener('click',function(){if(confirm('Reset lab?'))resetLab();});
+    document.getElementById('btn-help').addEventListener('click',function(){runCommand('help');inputEl.focus();});
+    document.getElementById('modal-close').addEventListener('click',function(){document.getElementById('feedback-modal').classList.remove('open');});
+    document.getElementById('feedback-modal').addEventListener('click',function(e){if(e.target.id==='feedback-modal')document.getElementById('feedback-modal').classList.remove('open');});
+    document.getElementById('btn-theme').addEventListener('click',function(){
+      const html=document.documentElement;
+      const next=html.getAttribute('data-theme')==='light'?'dark':'light';
+      if(next==='light') html.setAttribute('data-theme','light'); else html.removeAttribute('data-theme');
+      localStorage.setItem('cnm-lab-theme',next);
+    });
+    if(localStorage.getItem('cnm-lab-theme')==='light') document.documentElement.setAttribute('data-theme','light');
+
+    updatePrompt();
+    appendLine('<span class="term-info">Welcome — Scripting FA1: Creating and Running Basic Bash Scripts</span>');
+    appendLine('CNM CIST 1680 · Shebang, chmod, variables, exit codes.');
+    appendLine('student@cnm-lab:~$ <span style="opacity:.6"># try: mkdir -p ~/scripts</span>');
+    inputEl.focus();
+  })();
+  </script>
+</body>
+</html>
