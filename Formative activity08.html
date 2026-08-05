@@ -81,13 +81,59 @@
     .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--cnm-sky), var(--cnm-gold)); border-radius: 4px; transition: width .4s; }
     .footer-note { text-align: center; padding: .7rem; font-size: .75rem; color: var(--text-muted); border-top: 1px solid var(--border); }
     .tip { font-size: .78rem; color: var(--text-muted); margin-top: .55rem; padding: .5rem .65rem; background: rgba(65,182,230,.08); border-left: 3px solid var(--cnm-sky); border-radius: 0 4px 4px 0; }
+  
+    /* === Shared upgrades: non-copyable commands + accessible dialogs === */
+    .site-nav { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    .part-heading {
+      font-size: 0.95rem; font-weight: 700; color: var(--cnm-sky);
+      margin: 1.1rem 0 0.55rem; padding-bottom: 0.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .task-block h4 {
+      font-size: 0.9rem; color: var(--text-main); margin-bottom: 0.35rem; font-weight: 600;
+    }
+    .cmd-practice, .cmd-list {
+      background: var(--bg-terminal);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--cnm-gold);
+      border-radius: 6px;
+      padding: 0.6rem 0.75rem;
+      margin: 0.5rem 0;
+      font-family: 'Cascadia Code', Consolas, monospace;
+      font-size: 0.82rem;
+      color: #b8e0c8;
+      line-height: 1.55;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      cursor: default;
+    }
+    .cmd-practice .cmd-label {
+      display: block; font-size: 0.68rem; color: var(--cnm-gold);
+      font-family: 'Segoe UI', system-ui, sans-serif; font-weight: 700;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      margin-bottom: 0.3rem; opacity: 0.9;
+    }
+    .cmd-hint { font-size: 0.78rem; color: var(--text-muted); margin: 0.25rem 0 0.4rem; font-style: italic; }
+    .btn-danger { background: #c0392b; color: #fff; }
+    .btn-danger:hover { box-shadow: 0 0 12px rgba(192, 57, 43, 0.45); }
+    .modal-sm { max-width: 420px; }
+    .dialog-actions { display: flex; gap: 0.6rem; justify-content: flex-end; flex-wrap: wrap; }
+    .modal-body p { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem; }
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+    .site-header h1 .accent { color: var(--cnm-sky); }
+
   </style>
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to main content</a>
   <header class="site-header" role="banner">
     <div class="brand"><span class="brand-badge">CNM</span><h1>CIST 1680 · <span>Net FA2 Name Resolution</span></h1></div>
-    <div class="header-actions">
+    <div class="header-actions site-nav" aria-label="Lab actions">
       <button type="button" class="btn-ghost" id="btn-theme" aria-label="Toggle theme">Theme</button>
       <button type="button" class="btn-ghost" id="btn-reset" aria-label="Reset lab">Reset Lab</button>
       <button type="button" class="btn-sky" id="btn-help" aria-label="Help">Help</button>
@@ -96,14 +142,15 @@
   </header>
   <main id="main-content" class="layout">
     <aside class="card instructions" aria-label="Lab instructions">
-      <div class="card-header"><h2>📋 Lab Objectives</h2></div>
+      <div class="card-header"><h2>Lab Objectives</h2></div>
       <div class="card-body">
+        <h2 class="sr-only">Lab Tasks</h2>
         <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:1rem;"><strong style="color:var(--cnm-gold)">MLO-3 / MLO-5</strong> — Configure local static hostname resolution, resolver endpoints, and lookup order.</p>
 
         <div class="task-block">
-          <span class="badge badge-a">Part A</span>
-          <h3>Task 1 – Examine Config Files</h3>
-          <div class="cmd-list">cat /etc/hosts<br>cat /etc/resolv.conf<br>grep hosts /etc/nsswitch.conf</div>
+          <h3 class="part-heading">Part A</h3>
+          <h4>Task 1 – Examine Config Files</h4>
+          <div class="cmd-list" data-nocopy="1">cat /etc/hosts<br>cat /etc/resolv.conf<br>grep hosts /etc/nsswitch.conf</div>
           <div class="answer-field">
             <label for="ans-t1">✓ Verification — Static hosts entries (besides localhost), nameserver IP(s), hosts: line from nsswitch:</label>
             <textarea id="ans-t1" rows="3" placeholder="hosts: (only localhost)&#10;nameserver: 8.8.8.8&#10;hosts: files dns" aria-required="true"></textarea>
@@ -111,8 +158,7 @@
         </div>
 
         <div class="task-block">
-          <span class="badge badge-a">Part A</span>
-          <h3>Task 2 – nsswitch Order Meaning</h3>
+          <h4>Task 2 – nsswitch Order Meaning</h4>
           <p>What does the order of the <code style="color:var(--cnm-gold)">hosts:</code> line in nsswitch.conf tell the system to do? (1–2 sentences)</p>
           <div class="answer-field">
             <label for="ans-t2">Your explanation:</label>
@@ -121,9 +167,9 @@
         </div>
 
         <div class="task-block">
-          <span class="badge badge-b">Part B</span>
-          <h3>Task 3 – Add Static Entry</h3>
-          <div class="cmd-list">sudo cp /etc/hosts /etc/hosts.bak<br>echo '10.10.10.50   labserver.cis' | sudo tee -a /etc/hosts<br>cat /etc/hosts</div>
+          <h3 class="part-heading">Part B</h3>
+          <h4>Task 3 – Add Static Entry</h4>
+          <div class="cmd-list" data-nocopy="1">sudo cp /etc/hosts /etc/hosts.bak<br>echo '10.10.10.50   labserver.cis' | sudo tee -a /etc/hosts<br>cat /etc/hosts</div>
           <div class="answer-field">
             <label for="ans-t3">✓ Verification — Exact new line at bottom of /etc/hosts:</label>
             <textarea id="ans-t3" rows="2" placeholder="10.10.10.50   labserver.cis" aria-required="true"></textarea>
@@ -131,9 +177,8 @@
         </div>
 
         <div class="task-block">
-          <span class="badge badge-b">Part B</span>
-          <h3>Task 4 – Test Resolution</h3>
-          <div class="cmd-list">getent hosts labserver.cis<br>ping -c 2 labserver.cis</div>
+          <h4>Task 4 – Test Resolution</h4>
+          <div class="cmd-list" data-nocopy="1">getent hosts labserver.cis<br>ping -c 2 labserver.cis</div>
           <div class="answer-field">
             <label for="ans-t4">✓ Verification — IP returned by getent for labserver.cis:</label>
             <textarea id="ans-t4" rows="2" placeholder="10.10.10.50" aria-required="true"></textarea>
@@ -141,9 +186,8 @@
         </div>
 
         <div class="task-block">
-          <span class="badge badge-b">Part B</span>
-          <h3>Task 5 – Restore Backup</h3>
-          <div class="cmd-list">sudo cp /etc/hosts.bak /etc/hosts<br>getent hosts labserver.cis || echo 'Entry successfully removed'</div>
+          <h4>Task 5 – Restore Backup</h4>
+          <div class="cmd-list" data-nocopy="1">sudo cp /etc/hosts.bak /etc/hosts<br>getent hosts labserver.cis || echo 'Entry successfully removed'</div>
           <div class="answer-field">
             <label for="ans-t5">✓ Verification — Result of final getent (or removal message):</label>
             <textarea id="ans-t5" rows="2" placeholder="Entry successfully removed" aria-required="true"></textarea>
@@ -151,8 +195,8 @@
         </div>
 
         <div class="task-block">
-          <span class="badge badge-c">Part C</span>
-          <h3>Task 6 – Global vs Local Nameserver</h3>
+          <h3 class="part-heading">Part C</h3>
+          <h4>Task 6 – Global vs Local Nameserver</h4>
           <p>In 2–3 sentences, explain the difference between a global Internet nameserver and a local/subnetwork nameserver, and why a classroom might use a local TLD such as .cis.</p>
           <div class="answer-field">
             <label for="ans-t6">Your explanation:</label>
@@ -161,9 +205,8 @@
         </div>
 
         <div class="task-block">
-          <span class="badge badge-c">Part C</span>
-          <h3>Task 7 – External DNS Lookup</h3>
-          <div class="cmd-list">getent hosts google.com || host google.com</div>
+          <h4>Task 7 – External DNS Lookup</h4>
+          <div class="cmd-list" data-nocopy="1">getent hosts google.com || host google.com</div>
           <div class="answer-field">
             <label for="ans-t7">✓ Verification — One IP address returned for google.com:</label>
             <textarea id="ans-t7" rows="2" placeholder="e.g. 142.250.x.x" aria-required="true"></textarea>
@@ -175,7 +218,9 @@
     </aside>
 
     <section class="card terminal-wrap" aria-label="Terminal">
-      <div class="term-chrome" aria-hidden="true">
+      
+      <div class="card-header"><h2>Terminal Workspace</h2></div>
+<div class="term-chrome" aria-hidden="true">
         <span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span>
         <span class="term-title">student@cnm-lab: ~ — bash</span>
       </div>
@@ -368,7 +413,7 @@ services:       db files`;
     }
 
     document.getElementById('btn-submit').addEventListener('click',showFeedback);
-    document.getElementById('btn-reset').addEventListener('click',function(){if(confirm('Reset lab?'))resetLab();});
+    document.getElementById('btn-reset').addEventListener('click',function(){ _cnmOpenDialog('reset-modal', '#reset-cancel'); }
     document.getElementById('btn-help').addEventListener('click',function(){runCommand('help');inputEl.focus();});
     document.getElementById('modal-close').addEventListener('click',function(){document.getElementById('feedback-modal').classList.remove('open');});
     document.getElementById('feedback-modal').addEventListener('click',function(e){if(e.target.id==='feedback-modal')document.getElementById('feedback-modal').classList.remove('open');});
@@ -386,5 +431,105 @@ services:       db files`;
     inputEl.focus();
   })();
   </script>
+
+  <!-- Keyboard-accessible Reset confirmation -->
+  <div class="modal-overlay" id="reset-modal" role="dialog" aria-modal="true" aria-labelledby="reset-title" aria-describedby="reset-desc" hidden>
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2 id="reset-title">Reset Lab?</h2>
+        <button type="button" class="modal-close" id="reset-close" aria-label="Cancel reset and close dialog">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="reset-desc">This will clear your command history and all answer fields. This cannot be undone.</p>
+        <div class="dialog-actions">
+          <button type="button" class="btn-ghost" id="reset-cancel">Cancel</button>
+          <button type="button" class="btn-danger" id="reset-confirm">Reset Lab</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+<script>
+/* Shared accessible dialog + non-copy helpers (upgrade layer) */
+(function(){
+  function getFocusable(container) {
+    return Array.prototype.slice.call(
+      container.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')
+    ).filter(function(el){ return el.offsetWidth > 0 || el.offsetHeight > 0 || el === document.activeElement; });
+  }
+  window._cnmOpenDialog = function(overlayId, focusSelector) {
+    var overlay = document.getElementById(overlayId);
+    if (!overlay) return;
+    overlay._prevFocus = document.activeElement;
+    overlay.hidden = false;
+    overlay.classList.add('open');
+    var focusEl = focusSelector ? overlay.querySelector(focusSelector) : getFocusable(overlay)[0];
+    if (focusEl) focusEl.focus();
+  };
+  window._cnmCloseDialog = function(overlayId) {
+    var overlay = document.getElementById(overlayId);
+    if (!overlay) return;
+    overlay.classList.remove('open');
+    overlay.hidden = true;
+    if (overlay._prevFocus && typeof overlay._prevFocus.focus === 'function') overlay._prevFocus.focus();
+  };
+  function trapFocus(e, overlay) {
+    if (e.key !== 'Tab') return;
+    var nodes = getFocusable(overlay);
+    if (!nodes.length) return;
+    var first = nodes[0], last = nodes[nodes.length - 1];
+    if (e.shiftKey) { if (document.activeElement === first) { e.preventDefault(); last.focus(); } }
+    else { if (document.activeElement === last) { e.preventDefault(); first.focus(); } }
+  }
+  document.querySelectorAll('.cmd-list, .cmd-practice, [data-nocopy]').forEach(function(el){
+    el.addEventListener('copy', function(e){ e.preventDefault(); if (e.clipboardData) e.clipboardData.setData('text/plain',''); });
+    el.addEventListener('cut', function(e){ e.preventDefault(); });
+    el.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+    el.addEventListener('dragstart', function(e){ e.preventDefault(); });
+  });
+  var rc = document.getElementById('reset-cancel');
+  var rx = document.getElementById('reset-close');
+  var rf = document.getElementById('reset-confirm');
+  var rm = document.getElementById('reset-modal');
+  if (rc) rc.addEventListener('click', function(){ _cnmCloseDialog('reset-modal'); });
+  if (rx) rx.addEventListener('click', function(){ _cnmCloseDialog('reset-modal'); });
+  if (rf) rf.addEventListener('click', function(){
+    if (typeof resetLab === 'function') resetLab();
+    else if (typeof doReset === 'function') doReset();
+    _cnmCloseDialog('reset-modal');
+    var input = document.getElementById('cmd-input');
+    if (input) input.focus();
+  });
+  if (rm) rm.addEventListener('click', function(e){ if (e.target.id === 'reset-modal') _cnmCloseDialog('reset-modal'); });
+  document.addEventListener('keydown', function(e){
+    var resetOpen = rm && rm.classList.contains('open');
+    var fb = document.getElementById('feedback-modal');
+    var fbOpen = fb && fb.classList.contains('open');
+    if (!resetOpen && !fbOpen) return;
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      if (resetOpen) _cnmCloseDialog('reset-modal');
+      else if (fbOpen) { fb.classList.remove('open'); fb.hidden = true; }
+      return;
+    }
+    if (e.key === 'Tab') {
+      var overlay = resetOpen ? rm : fb;
+      if (overlay) trapFocus(e, overlay);
+    }
+  });
+  var btnReset = document.getElementById('btn-reset');
+  if (btnReset) {
+    btnReset.addEventListener('click', function(e){
+      if (document.getElementById('reset-modal')) {
+        e.stopImmediatePropagation();
+        e.preventDefault();
+        _cnmOpenDialog('reset-modal', '#reset-cancel');
+      }
+    }, true);
+  }
+})();
+</script>
+
 </body>
 </html>
